@@ -1,0 +1,53 @@
+{
+  "relay": {
+    "5v": false,
+    "12v": false,
+    "24v": false,
+    "contactor": false,
+    "stabilizer": false,
+    "wellPump": false,
+    "wellPumpStabilizer": false,
+    "gardenPump": false,
+    "gardenPumpStabilizer": false
+  },  
+  "sensors": {
+    "feedback": {
+      "ac": false,
+      "5v": false,
+      "12v": false,
+      "24v": false,
+      "contactor": false,
+      "stabilizer": false,
+      "wellPump": false,
+      "gardenPump": false
+    },
+    "voltage": {
+      "ac": null,
+      "stabilizer": null      
+    },
+    "pumps": {
+      "wellFlow": null,
+      "wellCurrent": null,
+      "gardenPressure": null,
+      "gardenCurrent": null
+    },
+    "tank": {
+      "level": {
+        "top": false,
+        "middle": false,
+        "low": false,
+        "bottom": false
+      },
+      "laser": null      
+    },
+    "weather": {
+      "temperature": null,
+      "humidity": null,
+      "pressure": null
+    },
+    "temperature": {
+      "system": null,
+      "video": null
+    }
+  }
+}

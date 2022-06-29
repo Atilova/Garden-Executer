@@ -3,75 +3,108 @@
 
   #include <Arduino.h>
   #include <Adafruit_MCP23017.h>
+  #include <ArduinoJson.h>
 
 
-  struct BaseSensor {
-    public:
-      String name;
-      BaseSensor(String name) {
-        this->name = name;
-      };
-      ~BaseSensor() {};
-      virtual int measure(void) {return 0;};
-  };
+  struct AbstractSensor
+    {
+      private:
+        const char* docLevel;
 
+      public:
+        const char* name;
 
-  struct SensorI2C : public BaseSensor {
-    private:
-      Adafruit_MCP23017 board;
-      uint8_t pinOutput;
-
-    public:
-      SensorI2C(String name, Adafruit_MCP23017 board, uint8_t pinOutput): BaseSensor(name) {
-        this->board = board;
-        this->pinOutput=pinOutput;
-      };
-
-      virtual int measure(void) {
-        Serial.print("Measure I2c -> ");
-        Serial.println(pinOutput);
-        return 20;
-      };
-  };
-
-
-  struct OneWireSensor : public BaseSensor {    
-    private:
-      uint8_t addressIndex;
-
-    public:  
-      OneWireSensor(String name, uint8_t addressIndex): BaseSensor(name) {
-        this->addressIndex=addressIndex;
-      };
-
-      virtual int measure(void) {
-        Serial.print("Measure OneWire -> ");
-        Serial.println(addressIndex);
-        return 10;
-      };
-  };
-
-  
-  class Sensors {
-    private:
-      BaseSensor** list;
-      uint8_t listSize;
-    
-    public:
-      Sensors(BaseSensor** list, uint8_t size) {
-        this->list = list;
-        listSize = size;
-      };
-      ~Sensors(void) {};
-
-      void get(const char* name) {
-        for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++) {
-          BaseSensor* sensor = list[sensorIndex];
-          if(sensor->name == name) {
-            sensor->measure();
-            return;  
+        AbstractSensor(const char* name, const char* level)
+          {
+            this->name = name;
+            docLevel = level;
           };
-        };
-      };
+        ~AbstractSensor() {};
+
+        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) {};
+    };
+
+
+  template<class RT> struct BaseSetup
+    {
+      private:
+        RT lastValue;
+    };
+
+
+  struct SensorI2C : private BaseSetup<uint8_t>,
+                     public AbstractSensor
+    {
+      private:
+        Adafruit_MCP23017 board;
+        uint8_t pinOutput;
+
+      public:
+        SensorI2C(const char* name, const char* level, Adafruit_MCP23017 board, const uint8_t pinOutput): AbstractSensor(name, level)
+          {
+            this->board = board;
+            this->pinOutput=pinOutput;
+          };
+
+        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true)
+          {
+            Serial.print("Measure I2c -> ");
+            doc["q"] = 2;
+            Serial.println(pinOutput);
+          };
   };
+
+
+  struct OneWireSensor : private BaseSetup<uint8_t>,
+                         public AbstractSensor
+    {
+      private:
+        uint8_t addressIndex;
+
+      public:
+        OneWireSensor(const char* name, const char* level, const uint8_t addressIndex): AbstractSensor(name, level)
+          {
+            this->addressIndex=addressIndex;
+          };
+
+        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
+          {
+            Serial.print("Measure OneWire -> ");
+            doc["w"] = 1;
+            Serial.println(addressIndex);
+          };
+    };
+
+
+  class Sensors
+    {
+      private:
+        AbstractSensor** list;
+        uint8_t listSize;
+        const char* moduleNamespace;
+        JsonDocument* doc;
+
+      public:
+        Sensors(AbstractSensor** list, uint8_t size, const char* moduleNamespace, JsonDocument& doc)
+          {
+            this->list = list;
+            listSize = size;
+            this->doc = &doc;
+          };
+        ~Sensors(void) {};
+
+        boolean measure(const char* name)
+          {
+            for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
+              {
+                AbstractSensor* sensor = list[sensorIndex];
+                if(sensor->name == name)
+                  {
+                    sensor -> measure(*doc, moduleNamespace);
+                    return true;
+                  };
+              };
+              return false;
+          };
+    };
 #endif
