@@ -4,20 +4,35 @@
   #include <Arduino.h>
   #include <Adafruit_MCP23017.h>
   #include <ArduinoJson.h>
+  #include "JsonFlow.h"
 
 
   struct AbstractSensor
     {
-      private:
-        const char* docLevel;
-
       public:
-        const char* name;
-
-        AbstractSensor(const char* name, const char* level)
+        const char* name;      
+        uint8_t levelNestedSize = 1;
+        char** splittedLevels;
+        
+        AbstractSensor(const char* name, const String& levels)
           {
             this->name = name;
-            docLevel = level;
+            this->levelNestedSize += std::count(levels.begin(), levels.end(), '.');
+            this->splittedLevels = new char* [levelNestedSize];
+
+            char levelCharArray[levels.length()];
+            strcpy(levelCharArray, levels.c_str());
+
+            char* token = strtok(levelCharArray, ".");
+            uint8_t index = 0;
+
+            while(token)
+              {
+                splittedLevels[index] = new char[strlen(token)+1];
+                strcpy(splittedLevels[index], token);
+                token = strtok(NULL, ".");
+                index++;
+              };
           };
         ~AbstractSensor() {};
 
@@ -27,8 +42,18 @@
 
   template<class RT> struct BaseSetup
     {
-      private:
+      public:
         RT lastValue;
+
+        boolean checkDiffer(RT currentValue, boolean diff)
+          {
+            if(!diff || (diff && currentValue != lastValue))
+              {
+                lastValue = currentValue;
+                return true;
+              };
+              return false;
+          };
     };
 
 
@@ -36,42 +61,43 @@
                      public AbstractSensor
     {
       private:
-        Adafruit_MCP23017 board;
+        Adafruit_MCP23017* board;
         uint8_t pinOutput;
 
       public:
-        SensorI2C(const char* name, const char* level, Adafruit_MCP23017 board, const uint8_t pinOutput): AbstractSensor(name, level)
+        SensorI2C(const char* name, const String& levels, Adafruit_MCP23017& board, const uint8_t pinOutput) : AbstractSensor(name, levels)
           {
-            this->board = board;
-            this->pinOutput=pinOutput;
+            this->board = &board;
+            this->pinOutput = pinOutput;
+            this->board->pinMode(pinOutput, INPUT_PULLUP);
           };
 
-        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true)
+        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
           {
             Serial.print("Measure I2c -> ");
-            doc["q"] = 2;
-            Serial.println(pinOutput);
+            uint8_t currentValue = 10;
+            checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
           };
   };
 
 
-  struct OneWireSensor : private BaseSetup<uint8_t>,
+  struct OneWireSensor : public BaseSetup<uint8_t>,
                          public AbstractSensor
     {
       private:
         uint8_t addressIndex;
 
       public:
-        OneWireSensor(const char* name, const char* level, const uint8_t addressIndex): AbstractSensor(name, level)
+        OneWireSensor(const char* name, const String& levels, const uint8_t addressIndex): AbstractSensor(name, levels)
           {
             this->addressIndex=addressIndex;
           };
 
         virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
           {
-            Serial.print("Measure OneWire -> ");
-            doc["w"] = 1;
-            Serial.println(addressIndex);
+            Serial.print("Measure OneWire -> ");            
+            uint8_t currentValue = addressIndex;
+            checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
           };
     };
 
@@ -88,7 +114,8 @@
         Sensors(AbstractSensor** list, uint8_t size, const char* moduleNamespace, JsonDocument& doc)
           {
             this->list = list;
-            listSize = size;
+            this->listSize = size;
+            this->moduleNamespace = moduleNamespace;
             this->doc = &doc;
           };
         ~Sensors(void) {};
