@@ -4,7 +4,7 @@
   #include <ArduinoJson.h>
 
 
-  class JsonWorkflow 
+  class JsonWorkflow
     {
       public:
         static int setValue(JsonDocument& doc, const char* section, char** levels, uint8_t nestedLevelSize, auto value)
@@ -21,7 +21,7 @@
                   break;
 
                 case(3):
-                docSection[levels[0]][levels[1]][levels[2]] = value;
+                  docSection[levels[0]][levels[1]][levels[2]] = value;
                   break;
 
                 case(4):
@@ -32,6 +32,6 @@
                   return -1;
               };
             return true;
-          };          
-    };            
+          };
+    };
 #endif
