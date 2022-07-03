@@ -4,7 +4,6 @@
   #include <Arduino.h>
   #include <ArduinoJson.h>
   #include <Adafruit_MCP23017.h>
-  #include "JsonFlow.h"
   #include "BaseTypes.h"
 
 
@@ -15,7 +14,7 @@
           public:
             const char* name;
 
-            AbstractSensor(const char* name, const String& jsonLevels) : 
+            AbstractSensor(const char* name, const String& jsonLevels) :
               AbstractType(jsonLevels)
               {
                 this->name = name;
@@ -95,7 +94,7 @@
                 {
                   // Serial.print("Measure I2c -> ");
                   uint8_t currentValue = pinOutput;
-                  checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, jsonNestedLevels, jsonNestedLevelsSize, currentValue);
+                  checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
                 };
         };
 
@@ -117,7 +116,7 @@
               {
                 // Serial.print("Measure OneWire -> ");
                 uint8_t currentValue = addressIndex;
-                checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, jsonNestedLevels, jsonNestedLevelsSize, currentValue);
+                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
         };
     };

@@ -9,21 +9,21 @@
 namespace systemRelays
   {
     struct Relay : public AbstractType
-      {        
-        Adafruit_MCP23017* board; //плата i2c
-        uint8_t pinOutput;       //pin на плате i2с, который соответствует нужному реле
-        const char* name;  // имя, через которое будем общаться с масяней
-        boolean level; // уровень сигнала управления платой реле (LOW, HIGH)
+      {
+        public:
+          Adafruit_MCP23017* board;  // плата i2c
+          uint8_t pinOutput;  // pin на плате i2с, который соответствует нужному реле
+          const char* name;  // имя, через которое будем общаться с масяней
+          boolean level;  // уровень сигнала управления платой реле (LOW, HIGH)
 
-
-        Relay(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, uint8_t pinOutput, boolean level=LOW) :
-          AbstractType(jsonLevels)
-          {
-            this->name = name;
-            this->board = &board;
-            this->pinOutput = pinOutput;
-            this->level = level;
-          };
+          Relay(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, uint8_t pinOutput, boolean level=LOW) :
+            AbstractType(jsonLevels)
+            {
+              this->name = name;
+              this->board = &board;
+              this->pinOutput = pinOutput;
+              this->level = level;
+            };
       };
 
 
@@ -33,15 +33,16 @@ namespace systemRelays
             Relay* list;
 
           public:
-            void configure(Relay list[], uint8_t size, const char* moduleNamespace, JsonDocument& doc)              
+            void configure(Relay list[], uint8_t size, const char* moduleNamespace, JsonDocument& doc)
               {
                 BaseController::configure(size, moduleNamespace, doc);
                 this->list = list;
 
-                for(uint8_t relayIndex=0; relayIndex<listSize; relayIndex++) {
-                  Relay currentRelay = list[relayIndex];
-                  currentRelay.board->pinMode(currentRelay.pinOutput, OUTPUT);
-                };
+                for(uint8_t relayIndex=0; relayIndex<listSize; relayIndex++)
+                  {
+                    Relay currentRelay = list[relayIndex];
+                    currentRelay.board->pinMode(currentRelay.pinOutput, OUTPUT);
+                  };
               };
 
             int setState(const char* relayName, boolean state)
