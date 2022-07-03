@@ -2,136 +2,138 @@
   #define _SENSORS_H_
 
   #include <Arduino.h>
-  #include <Adafruit_MCP23017.h>
   #include <ArduinoJson.h>
+  #include <Adafruit_MCP23017.h>
   #include "JsonFlow.h"
+  #include "BaseTypes.h"
 
 
-  struct AbstractSensor
+  namespace systemSensors
     {
-      public:
-        const char* name;      
-        uint8_t levelNestedSize = 1;
-        char** splittedLevels;
-        
-        AbstractSensor(const char* name, const String& levels)
-          {
-            this->name = name;
-            this->levelNestedSize += std::count(levels.begin(), levels.end(), '.');
-            this->splittedLevels = new char* [levelNestedSize];
+      struct AbstractSensor: public AbstractType
+        {
+          public:
+            const char* name;
 
-            char levelCharArray[levels.length()];
-            strcpy(levelCharArray, levels.c_str());
-
-            char* token = strtok(levelCharArray, ".");
-            uint8_t index = 0;
-
-            while(token)
+            AbstractSensor(const char* name, const String& jsonLevels) : 
+              AbstractType(jsonLevels)
               {
-                splittedLevels[index] = new char[strlen(token)+1];
-                strcpy(splittedLevels[index], token);
-                token = strtok(NULL, ".");
-                index++;
+                this->name = name;
               };
-          };
-        ~AbstractSensor() {};
+            ~AbstractSensor() {};
 
-        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) {};
-    };
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) {};
+        };
 
 
-  template<class RT> struct BaseSetup
-    {
-      public:
-        RT lastValue;
+      template<class RT> struct BaseSensor
+        {
+          public:
+            RT lastValue;
 
-        boolean checkDiffer(RT currentValue, boolean diff)
-          {
-            if(!diff || (diff && currentValue != lastValue))
+            boolean checkDiffer(RT currentValue, boolean diff)
               {
-                lastValue = currentValue;
-                return true;
-              };
-              return false;
-          };
-    };
-
-
-  struct SensorI2C : private BaseSetup<uint8_t>,
-                     public AbstractSensor
-    {
-      private:
-        Adafruit_MCP23017* board;
-        uint8_t pinOutput;
-
-      public:
-        SensorI2C(const char* name, const String& levels, Adafruit_MCP23017& board, const uint8_t pinOutput) : AbstractSensor(name, levels)
-          {
-            this->board = &board;
-            this->pinOutput = pinOutput;
-            this->board->pinMode(pinOutput, INPUT_PULLUP);
-          };
-
-        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
-          {
-            Serial.print("Measure I2c -> ");
-            uint8_t currentValue = 10;
-            checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
-          };
-  };
-
-
-  struct OneWireSensor : public BaseSetup<uint8_t>,
-                         public AbstractSensor
-    {
-      private:
-        uint8_t addressIndex;
-
-      public:
-        OneWireSensor(const char* name, const String& levels, const uint8_t addressIndex): AbstractSensor(name, levels)
-          {
-            this->addressIndex=addressIndex;
-          };
-
-        virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
-          {
-            Serial.print("Measure OneWire -> ");            
-            uint8_t currentValue = addressIndex;
-            checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
-          };
-    };
-
-
-  class Sensors
-    {
-      private:
-        AbstractSensor** list;
-        uint8_t listSize;
-        const char* moduleNamespace;
-        JsonDocument* doc;
-
-      public:
-        Sensors(AbstractSensor** list, uint8_t size, const char* moduleNamespace, JsonDocument& doc)
-          {
-            this->list = list;
-            this->listSize = size;
-            this->moduleNamespace = moduleNamespace;
-            this->doc = &doc;
-          };
-        ~Sensors(void) {};
-
-        boolean measure(const char* name)
-          {
-            for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
-              {
-                AbstractSensor* sensor = list[sensorIndex];
-                if(sensor->name == name)
+                if(!diff || (diff && currentValue != lastValue))
                   {
-                    sensor -> measure(*doc, moduleNamespace);
+                    lastValue = currentValue;
                     return true;
                   };
+                  return false;
               };
-              return false;
-          };
+        };
+
+
+      class SensorsController : public BaseController
+        {
+          private:
+            AbstractSensor** list;
+
+          public:
+            void configure(AbstractSensor** list, uint8_t size, const char* moduleNamespace, JsonDocument& doc)
+              {
+                BaseController::configure(size, moduleNamespace, doc);
+                this->list = list;
+              };
+
+            boolean measure(const char* name, boolean diff=true)
+              {
+                for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
+                  {
+                    AbstractSensor* sensor = list[sensorIndex];
+                    if(sensor->name == name)
+                      {
+                        sensor -> measure(*doc, moduleNamespace, diff);
+                        return true;
+                      };
+                  };
+                  return false;
+              };
+
+            void measureAll(boolean diff=true) {
+              Serial.println("All");
+            };
+        };
+
+
+        struct SensorI2C : private BaseSensor<uint8_t>,
+                           public AbstractSensor
+          {
+            private:
+              Adafruit_MCP23017* board;
+              uint8_t pinOutput;
+
+            public:
+              SensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
+                AbstractSensor(name, jsonLevels)
+                {
+                  this->board = &board;
+                  this->pinOutput = pinOutput;
+                  this->board->pinMode(pinOutput, INPUT_PULLUP);
+                };
+
+              virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+                {
+                  // Serial.print("Measure I2c -> ");
+                  uint8_t currentValue = pinOutput;
+                  checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, jsonNestedLevels, jsonNestedLevelsSize, currentValue);
+                };
+        };
+
+
+      struct OneWireSensor : private BaseSensor<uint8_t>,
+                             public AbstractSensor
+        {
+          private:
+            uint8_t addressIndex;
+
+          public:
+            OneWireSensor(const char* name, const String& jsonLevels, const uint8_t addressIndex) :
+              AbstractSensor(name, jsonLevels)
+              {
+                this->addressIndex=addressIndex;
+              };
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+              {
+                // Serial.print("Measure OneWire -> ");
+                uint8_t currentValue = addressIndex;
+                checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, jsonNestedLevels, jsonNestedLevelsSize, currentValue);
+              };
+        };
     };
+
+    // struct SensorTemplate : private BaseSensor<>,
+    //                         public AbstractSensor
+    //   {
+    //     public:
+    //       SensorTemplate(const char* name, const String& levels) : AbstractSensor(name, levels)
+    //         {
+
+    //         };
+
+    //       virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
+    //         {
+    //           checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
+    //         };
+    //   };
 #endif
