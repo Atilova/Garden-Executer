@@ -68,8 +68,9 @@
                   return false;
               };
 
-            void measureAll(boolean diff=true) {
-              Serial.println("All");
+            void measureAll(boolean diff=true) {              
+              for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
+                list[sensorIndex] -> measure(*doc, moduleNamespace, diff);
             };
         };
 

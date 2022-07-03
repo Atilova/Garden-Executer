@@ -7,7 +7,7 @@
 
 
 namespace systemRelays
-  {
+  {    
     struct Relay : public AbstractType
       {
         public:
@@ -26,6 +26,24 @@ namespace systemRelays
             };
       };
 
+    struct SearchResponse
+      {
+        public:
+          Relay* relay;
+          boolean code;
+
+          SearchResponse(Relay& relay) 
+            {
+              this->relay = &relay;
+              this->code = true;
+            };
+
+          SearchResponse() 
+            {
+              this->code = false;
+            };
+          ~SearchResponse() {};
+      };
 
       class RelayController : BaseController
         {
@@ -44,41 +62,55 @@ namespace systemRelays
                     currentRelay.board->pinMode(currentRelay.pinOutput, OUTPUT);
                   };
               };
-
+            
             int setState(const char* relayName, boolean state)
               {
-                for(uint8_t relayIndex=0; relayIndex<listSize; relayIndex++)
-                  {
-                    Relay currentRelay = list[relayIndex];
-                    if(currentRelay.name == relayName)
-                      return controlRelay(currentRelay, state);
-                  };
-                return -1;
+                SearchResponse result = getRelay(relayName);
+                if(!result.code)
+                  return -1;
+
+                setState(result.relay, state);                
+                return getState(result.relay);
               };
 
             int getState(const char* relayName)
               {
+                SearchResponse result = getRelay(relayName);
+                if(!result.code)
+                  return -1;
+                return getState(result.relay);
+              };
+            
+            void readAll(void)
+              {
                 for(uint8_t relayIndex=0; relayIndex<listSize; relayIndex++)
                   {
-                    Relay currentRelay = list[relayIndex];
-                    if(currentRelay.name == relayName)
-                      {
-                        bool x = currentRelay.board->digitalRead(currentRelay.pinOutput) == currentRelay.level ? HIGH : LOW;
-                        Serial.println(x ? "ON " : "OFF ");
-                        return x;
-                      };
-                  };
-                return -1;
+                    Relay relay = list[relayIndex];                    
+                    relay.setValue(*doc, moduleNamespace, getState(&relay));
+                  };                  
               };
 
           private:
-            boolean controlRelay(Relay relay, boolean state) {
-              relay.board->digitalWrite(relay.pinOutput, state != relay.level ? LOW : HIGH);
-              Serial.println(relay.board->digitalRead(relay.pinOutput) == relay.level ? "ON " : "OFF " );
-              int t = relay.board->digitalRead(relay.pinOutput);
-              Serial.println(t);
-              return true;
-            };
+            void setState(Relay* relay, boolean state) 
+              {
+                relay->board->digitalWrite(relay->pinOutput, state != relay->level ? LOW : HIGH);                
+              };
+
+            boolean getState(Relay* relay) 
+              {
+                return relay->board->digitalRead(relay->pinOutput) == relay->level ? true : false;
+              };
+
+            SearchResponse getRelay(const char* name) 
+              {
+                for(uint8_t relayIndex=0; relayIndex<listSize; relayIndex++)
+                  {
+                    Relay currentRelay = list[relayIndex];
+                    if(currentRelay.name == name)
+                      return SearchResponse(currentRelay);
+                  };
+                  return SearchResponse();
+              };
         };
   };
 #endif

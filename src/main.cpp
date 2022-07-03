@@ -36,18 +36,26 @@ void setup()
     Serial.begin(115200);
     Serial.println();
 
-    Wire.begin();
-    powerBoardI2C.writeGPIOAB(0xffff);
+    Wire.begin();    
+    powerBoardI2C.writeGPIOAB(0xfff);
     powerBoardI2C.begin(0x0);  // плата управления силовыми реле сист. полива
     sensorsBoardI2C.begin(0x2);  // сигналы от датчиков обратной связи
-
+    
     relays.configure(relaysList, len(relaysList), "relays", doc);
     sensors.configure(sensorsList, len(sensorsList), "sensors", doc);
+
+
+    delay(1000);
+    relays.setState("SYSTEM_5V_RELAY", true);
+    relays.setState("SYSTEM_CONTACTOR", true);
+    relays.setState("SYSTEM_12V_RELAY", true);
+
+    sensors.measureAll();
+    relays.readAll();
+    serializeJsonPretty(doc, Serial);
   };
-
-
 
 void loop()
   {
-
+   
   };

@@ -5,6 +5,7 @@
   #include <ArduinoJson.h>
   #include <ArduinoJson.h>
 
+
   class BaseController
     {
       public:
@@ -54,6 +55,7 @@
 
           int setValue(JsonDocument& doc, const char* section, auto value)
             {
+              //Todo: needs a better solution
               auto docSection = doc[section];
               switch(jsonNestedLevelsSize)
                 {
