@@ -4,6 +4,7 @@
   #include <Arduino.h>
   #include <ArduinoJson.h>
   #include <Adafruit_MCP23017.h>
+  #include <DallasTemperature.h>
   #include "BaseTypes.h"
 
 
@@ -120,20 +121,31 @@
                 checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
         };
+
+      struct SensorDallasTemperatureOneWire : private BaseSensor<float>,
+                                              public AbstractSensor
+        {
+          private:
+            DeviceAddress* deviceAddress;
+            DallasTemperature* controller;
+          
+          public:
+            SensorDallasTemperatureOneWire(const char* name, const String& levels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) : 
+              AbstractSensor(name, levels)
+              { 
+                this->controller = &controller;
+                this->deviceAddress = &address;
+                if(!controller.isConnected(address)) 
+                  return;
+                controller.setResolution(address, resolution);
+              };
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
+              {
+                float currentValue = controller->getTempC(*deviceAddress);              
+                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+              };
+        };
+
     };
-
-    // struct SensorTemplate : private BaseSensor<>,
-    //                         public AbstractSensor
-    //   {
-    //     public:
-    //       SensorTemplate(const char* name, const String& levels) : AbstractSensor(name, levels)
-    //         {
-
-    //         };
-
-    //       virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
-    //         {
-    //           checkDiffer(currentValue, diff) && JsonWorkflow::setValue(doc, section, splittedLevels, levelNestedSize, currentValue);
-    //         };
-    //   };
 #endif
