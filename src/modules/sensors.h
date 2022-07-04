@@ -75,15 +75,15 @@
         };
 
 
-        struct SensorI2C : private BaseSensor<uint8_t>,
-                           public AbstractSensor
+        struct DigitalSensorI2C : private BaseSensor<uint8_t>,
+                                  public AbstractSensor
           {
             private:
               Adafruit_MCP23017* board;
               uint8_t pinOutput;
 
             public:
-              SensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
+              DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
                 AbstractSensor(name, jsonLevels)
                 {
                   this->board = &board;
@@ -94,7 +94,7 @@
               virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
                 {
                   // Serial.print("Measure I2c -> ");
-                  uint8_t currentValue = pinOutput;
+                  uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine 
                   checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
                 };
         };

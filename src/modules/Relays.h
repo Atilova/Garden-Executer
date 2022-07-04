@@ -70,7 +70,7 @@ namespace systemRelays
                   return -1;
 
                 setState(result.relay, state);                
-                return getState(result.relay);
+                return getState(result.relay) == state;
               };
 
             int getState(const char* relayName)
