@@ -5,6 +5,7 @@
   #include <ArduinoJson.h>
   #include <Adafruit_MCP23017.h>
   #include <DallasTemperature.h>
+  #include <PZEM004Tv30.h>
   #include "BaseTypes.h"
 
 
@@ -76,49 +77,29 @@
         };
 
 
-        struct DigitalSensorI2C : private BaseSensor<uint8_t>,
+      struct DigitalSensorI2C : private BaseSensor<uint8_t>,
                                   public AbstractSensor
-          {
-            private:
-              Adafruit_MCP23017* board;
-              uint8_t pinOutput;
-
-            public:
-              DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
-                AbstractSensor(name, jsonLevels)
-                {
-                  this->board = &board;
-                  this->pinOutput = pinOutput;
-                  this->board->pinMode(pinOutput, INPUT_PULLUP);
-                };
-
-              virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
-                {
-                  uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine
-                  checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
-                };
-        };
-
-
-      struct OneWireSensor : private BaseSensor<uint8_t>,
-                             public AbstractSensor
         {
           private:
-            uint8_t addressIndex;
+            Adafruit_MCP23017* board;
+            uint8_t pinOutput;
 
           public:
-            OneWireSensor(const char* name, const String& jsonLevels, const uint8_t addressIndex) :
+            DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
               AbstractSensor(name, jsonLevels)
               {
-                this->addressIndex=addressIndex;
+                this->board = &board;
+                this->pinOutput = pinOutput;
+                this->board->pinMode(pinOutput, INPUT_PULLUP);
               };
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
               {
-                uint8_t currentValue = addressIndex;
+                uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine
                 checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
         };
+
 
       struct SensorDallasTemperatureOneWire : private BaseSensor<float>,
                                               public AbstractSensor
@@ -143,14 +124,10 @@
               {
                 float currentValue = controller->getTempC(*deviceAddress);
                 if(checkDiffer(currentValue, diff))
-                  {
-                    if(currentValue == ERROR)
-                      setValue(doc, section, "error");
-                    else
-                      setValue(doc, section, currentValue);
-                  }
+                  currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
               };
         };
+
 
       struct SensorWaterFlow : private BaseSensor<float>,
                                public AbstractSensor
@@ -171,19 +148,20 @@
               {
                 float totalPulse = pulseIn(pinInput, HIGH) + pulseIn(pinInput, LOW);
                 if(!totalPulse)
-                  {
                     setValue(doc, section, "error");
-                    return;
+                else
+                  {
+                    uint16_t currentValue = round(1000000 / totalPulse);
+                    checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
                   };
-                uint16_t currentValue = round(1000000 / totalPulse);
-                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
         };
 
+
       struct SensorWaterPressure : private BaseSensor<float>,
                                    public AbstractSensor
-        {          
-          private:            
+        {
+          private:
             static const uint8_t zeroPressureK = 0.17;
             static const uint16_t resistanceR1 = 1000,  // делитель 5v -> 3.3v
                                   resistanceR2 = 2000;
@@ -193,11 +171,11 @@
             SensorWaterPressure(const char* name, const String& levels, uint8_t pinInput) :
               AbstractSensor(name, levels)
               {
-                this->pinInput = pinInput;                
+                this->pinInput = pinInput;
               };
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
-              {                
+              {
                 float decimalValue = analogRead(pinInput) * 3.333 / 4096,
                       calculatedPressure = (decimalValue - zeroPressureK) * 3.947693,  // Переводим в АТМФ
                       currentValue = calculatedPressure * (resistanceR1+resistanceR2) / resistanceR2;  // Масштабируем за счет делителя
@@ -206,5 +184,63 @@
                 checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
         };
-    };
+
+
+      struct PzemSensor
+        {
+          protected:
+            static const int ERROR = -1;
+
+            PZEM004Tv30* sensor;
+
+            PzemSensor(PZEM004Tv30& sensor)
+              {
+                this->sensor = &sensor;
+              };
+            ~PzemSensor() {};
+        };
+
+
+      struct PzemVoltageSensor : private BaseSensor<int16_t>,
+                                 public AbstractSensor,
+                                 public PzemSensor
+        {
+          private:
+            static const uint32_t ERROR_CODE = 2174483647;
+
+          public:
+            PzemVoltageSensor(const char* name, const String& levels, PZEM004Tv30& sensor) :
+              AbstractSensor(name, levels),
+              PzemSensor(sensor) {};
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+              {
+                uint32_t currentValue = round(sensor->voltage());
+                if(currentValue == ERROR_CODE || isnan(currentValue))
+                  currentValue = -1;
+
+                checkDiffer(currentValue, diff) && currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
+              };
+        };
+
+
+      struct PzemCurrentSensor : private BaseSensor<float>,
+                                 public AbstractSensor,
+                                 public PzemSensor
+        {
+          public:
+            PzemCurrentSensor(const char* name, const String& levels, PZEM004Tv30& sensor) :
+              AbstractSensor(name, levels),
+              PzemSensor(sensor) {};
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+              {
+                float currentValue = sensor->current();
+                if(isnan(currentValue))
+                  currentValue = -1;
+
+                checkDiffer(currentValue, diff) && currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
+              };
+        };
+  };
 #endif
