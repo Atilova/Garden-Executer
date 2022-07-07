@@ -69,7 +69,7 @@
                   return false;
               };
 
-            void measureAll(boolean diff=true) {              
+            void measureAll(boolean diff=true) {
               for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
                 list[sensorIndex] -> measure(*doc, moduleNamespace, diff);
             };
@@ -94,8 +94,7 @@
 
               virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
                 {
-                  // Serial.print("Measure I2c -> ");
-                  uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine 
+                  uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine
                   checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
                 };
         };
@@ -116,7 +115,6 @@
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
               {
-                // Serial.print("Measure OneWire -> ");
                 uint8_t currentValue = addressIndex;
                 checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
               };
@@ -125,27 +123,61 @@
       struct SensorDallasTemperatureOneWire : private BaseSensor<float>,
                                               public AbstractSensor
         {
+          static const int ERROR = -127;
           private:
             DeviceAddress* deviceAddress;
             DallasTemperature* controller;
-          
+
           public:
-            SensorDallasTemperatureOneWire(const char* name, const String& levels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) : 
+            SensorDallasTemperatureOneWire(const char* name, const String& levels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
               AbstractSensor(name, levels)
-              { 
+              {
                 this->controller = &controller;
                 this->deviceAddress = &address;
-                if(!controller.isConnected(address)) 
+                if(!controller.isConnected(address))
                   return;
                 controller.setResolution(address, resolution);
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff=true) override
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
               {
-                float currentValue = controller->getTempC(*deviceAddress);              
-                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+                float currentValue = controller->getTempC(*deviceAddress);
+                if(checkDiffer(currentValue, diff))
+                  {
+                    if(currentValue == ERROR)
+                      setValue(doc, section, "error");
+                    else
+                      setValue(doc, section, currentValue);
+                  }
               };
         };
 
+      struct SensorWaterFlow : private BaseSensor<float>,
+                               public AbstractSensor
+        {
+          // static const int ERROR = -127;
+          private:
+            uint8_t pinInput;
+
+          public:
+            SensorWaterFlow(const char* name, const String& levels, uint8_t pinInput) :
+              AbstractSensor(name, levels)
+              {
+                this->pinInput = pinInput;
+                pinMode(pinInput, INPUT);
+              };
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+              {
+                float totalPulse = pulseIn(pinInput, HIGH) + pulseIn(pinInput, LOW);
+                if(!totalPulse)
+                  {
+                    setValue(doc, section, "error");
+                    return;
+                  };
+                uint16_t currentValue = round(1000000 / totalPulse);
+                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+              };
+        };
     };
 #endif
