@@ -2,6 +2,7 @@
 #include <Adafruit_MCP23017.h>
 #include <modules/Init.h>
 #include <ArduinoJson.h>
+#include <Settings.h>
 #include <Esp.h>
 
 #define len(object) sizeof(object) / sizeof(*object)
