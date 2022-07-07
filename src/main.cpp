@@ -3,10 +3,14 @@
 #include <modules/Init.h>
 #include <ArduinoJson.h>
 #include <Settings.h>
+#include <Secrete.h>
+#include <modules/Mqtt.h>
 #include <Esp.h>
 
-#define len(object) sizeof(object) / sizeof(*object)
 
+
+
+mosquitto::MqttConsumer mqttEngine;
 
 StaticJsonDocument<500> doc;
 Adafruit_MCP23017 powerBoardI2C,
@@ -45,15 +49,19 @@ void setup()
     relays.configure(relaysList, len(relaysList), "relays", doc);
     sensors.configure(sensorsList, len(sensorsList), "sensors", doc);
 
+    mqttEngine.configure(mqttConfig);
 
-    delay(1000);
-    relays.setState("SYSTEM_5V_RELAY", true);
-    relays.setState("SYSTEM_CONTACTOR", true);
-    relays.setState("SYSTEM_12V_RELAY", true);
 
-    sensors.measureAll();
-    relays.readAll();
-    serializeJsonPretty(doc, Serial);
+  //   delay(1000);
+  //   relays.setState("SYSTEM_5V_RELAY", true);
+  //   relays.setState("SYSTEM_CONTACTOR", true);
+  //   relays.setState("SYSTEM_12V_RELAY", true);
+
+  //   sensors.measureAll();
+  //   relays.readAll();
+  //   serializeJsonPretty(doc, Serial);
+
+    mqttEngine.start();
   };
 
 void loop()
