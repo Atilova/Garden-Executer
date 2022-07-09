@@ -4,7 +4,8 @@
   #include <Arduino.h>
   #include <ArduinoJson.h>
   #include <ArduinoJson.h>
-
+  #include <iostream>
+  #include <functional>
 
   class BaseController
     {
@@ -24,7 +25,6 @@
             this->doc = &doc;
           };
       };
-
 
     struct AbstractType
       {
@@ -79,22 +79,73 @@
       };
 
 
+//* new version
+
+    typedef std::function<void(void)> DifferType;
+
+    template<typename T> T* useType(T defaultValue) 
+      {        
+        T* typePointer = &defaultValue;
+        return typePointer;
+      };
+
+    template<typename ValType> struct LastMeasuring
+      {
+        ValType lastValue;
+
+        LastMeasuring(ValType initValue) 
+          {
+            lastValue = initValue;
+          };
+
+        ~LastMeasuring() {};
+
+        void getDiffer(void)
+          {
+            Serial.print("Here -> ");
+            Serial.println(lastValue);
+          };    
+
+      };
+
+
     struct JsonFieldLevel
       {
         public:
+          void* lastValue;
           const char* name;
           uint8_t size;
           char** jsonLevels;
+          DifferType myPtr;
 
-          JsonFieldLevel(const char* name, uint8_t size)
+          JsonFieldLevel() {};
+
+          template<typename T> JsonFieldLevel(T* typePointer, const char* name, const String& strLevels)
             {
               this->name = name;
-              this->size = size;
+              this->size = std::count(strLevels.begin(), strLevels.end(), '.') + 1;
               this->jsonLevels = new char* [size];
+
+              char levelCharArray[strLevels.length()];
+              strcpy(levelCharArray, strLevels.c_str());
+
+              char* token = strtok(levelCharArray, ".");
+              uint8_t index = 0;
+
+              while(token)
+                {
+                  this->jsonLevels[index] = new char[strlen(token)+1];
+                  strcpy(this->jsonLevels[index], token);
+                  token = strtok(NULL, ".");
+                  index++;
+                };
+
+              myPtr = std::bind(&LastMeasuring<T>::getDiffer, new LastMeasuring<T> {*typePointer});              
             };
 
           ~JsonFieldLevel() {};
       };
+
 
     struct MultipleAbstractType
       {
@@ -102,30 +153,9 @@
           JsonFieldLevel** jsonFields = nullptr;
           uint8_t fillIndex = 0;
 
-          void addField(const String* levelConfig)
+          void addField(JsonFieldLevel* field)
             {
-              char* name = new char[levelConfig[1].length()];
-              strcpy(name, levelConfig[1].c_str());
-
-              JsonFieldLevel* newField = new JsonFieldLevel (
-                name,
-                std::count(levelConfig[0].begin(), levelConfig[0].end(), '.')+1
-              );
-
-              char levelCharArray[levelConfig[0].length()];
-              strcpy(levelCharArray, levelConfig[0].c_str());
-
-              char* token = strtok(levelCharArray, ".");
-              uint8_t index = 0;
-
-              while(token)
-                {
-                  newField->jsonLevels[index] = new char[strlen(token)+1];
-                  strcpy(newField->jsonLevels[index], token);
-                  token = strtok(NULL, ".");
-                  index++;
-                };
-              jsonFields[fillIndex] = newField;
+              jsonFields[fillIndex] = field;
               fillIndex++;
             };
 
@@ -143,52 +173,66 @@
 
           // Should be called at least ones
           template<class FirstField, class ...Fields> void add(const FirstField& firstField, const Fields& ...args)
-            {                            
+            {
               jsonFields = new JsonFieldLevel* [sizeof...(args)+1];
+
               addField(firstField);
               add(args...);
             };
 
-          int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
-            {              
-              if(jsonFields == nullptr)
-                return -1;  // Not configured
-
-              JsonFieldLevel* searchedField = nullptr;
-              if(name == nullptr)
-                searchedField = jsonFields[0];
-              else
-                for(uint8_t index = 0; index < fillIndex; index++)
-                  {                    
-                    Serial.println(jsonFields[index]->name);
-                    if(!strcmp(jsonFields[index]->name, name))
-                      searchedField = jsonFields[index];                      
-                  };
-
-              if(searchedField == nullptr)
-                return -2;  // Unable to search
-
-              auto docSection = doc[section];
-              char** jsonLevels = searchedField->jsonLevels;
-              //Todo: needs a better solution
-              switch(searchedField->size)
+          void show(void)
+            {
+              for(uint8_t index = 0; index < fillIndex; index++)
                 {
-                  case(1):
-                    docSection[jsonLevels[0]] = value;
-                    break;
-                  case(2):
-                    docSection[jsonLevels[0]][jsonLevels[1]] = value;
-                    break;
-                  case(3):
-                    docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]] = value;
-                    break;
-                  case(4):
-                    docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
-                    break;
-                  default:
-                    return -3;  // Not supported size
+                  Serial.print("Name -> ");              
+                  Serial.println(jsonFields[index]->name);
+                  jsonFields[index]->myPtr();
                 };
-              return true;
             };
+
+          // int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
+          //   {
+          //     if(jsonFields == nullptr)
+          //       return -1;  // Not configured
+
+          //     JsonFieldLevel* searchedField = nullptr;
+          //     if(name == nullptr)
+          //       searchedField = jsonFields[0];
+          //     else
+          //       for(uint8_t index = 0; index < fillIndex; index++)
+          //         {
+          //           Serial.println(jsonFields[index]->name);
+          //           if(!strcmp(jsonFields[index]->name, name))
+          //             searchedField = jsonFields[index];
+          //         };
+
+          //     if(searchedField == nullptr)
+          //       return -2;  // Unable to search
+
+          //     auto docSection = doc[section];
+          //     char** jsonLevels = searchedField->jsonLevels;
+          //     //Todo: needs a better solution
+          //     switch(searchedField->size)
+          //       {
+          //         case(1):
+          //           docSection[jsonLevels[0]] = value;
+          //           break;
+          //         case(2):
+          //           docSection[jsonLevels[0]][jsonLevels[1]] = value;
+          //           break;
+          //         case(3):
+          //           docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]] = value;
+          //           break;
+          //         case(4):
+          //           docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
+          //           break;
+          //         default:
+          //           return -3;  // Not supported size
+          //       };
+          //     return true;
+          //   };
       };
 #endif
+
+
+

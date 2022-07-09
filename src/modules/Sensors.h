@@ -78,7 +78,7 @@
 
 
       struct DigitalSensorI2C : private BaseSensor<uint8_t>,
-                                  public AbstractSensor
+                                public AbstractSensor
         {
           private:
             Adafruit_MCP23017* board;
@@ -186,60 +186,49 @@
         };
 
 
-      struct PzemSensor
+      struct MultipleAbstractSensor: public MultipleAbstractType
+        {
+          public:
+            const char* name;
+
+            MultipleAbstractSensor(const char* name)
+              {
+                this->name = name;
+              };            
+
+            virtual void measure(JsonDocument& doc, const char* section, boolean diff) {};
+        };
+
+
+      struct PzemSensor : public MultipleAbstractSensor
         {
           protected:
             static const int ERROR = -1;
+            static const uint32_t VOLTAGE_ERROR_CODE = 2174483647;
 
+          private:
+            const char* name;
             PZEM004Tv30* sensor;
 
-            PzemSensor(PZEM004Tv30& sensor)
+          public:
+            PzemSensor(const char* name, const String& jsonVoltageLevel, const String& jsonCurrentLevel, PZEM004Tv30& sensor) :
+              MultipleAbstractSensor(name)
               {
                 this->sensor = &sensor;
+                                
+                MultipleAbstractType::add(
+                  new JsonFieldLevel({useType<int16_t>(0), "voltage", jsonVoltageLevel}),
+                  new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel})               
+                );
+
+                show();
               };
             ~PzemSensor() {};
-        };
-
-
-      struct PzemVoltageSensor : private BaseSensor<int16_t>,
-                                 public AbstractSensor,
-                                 public PzemSensor
-        {
-          private:
-            static const uint32_t ERROR_CODE = 2174483647;
-
-          public:
-            PzemVoltageSensor(const char* name, const String& levels, PZEM004Tv30& sensor) :
-              AbstractSensor(name, levels),
-              PzemSensor(sensor) {};
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
               {
-                uint32_t currentValue = round(sensor->voltage());
-                if(currentValue == ERROR_CODE || isnan(currentValue))
-                  currentValue = -1;
-
-                checkDiffer(currentValue, diff) && currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
-              };
-        };
-
-
-      struct PzemCurrentSensor : private BaseSensor<float>,
-                                 public AbstractSensor,
-                                 public PzemSensor
-        {
-          public:
-            PzemCurrentSensor(const char* name, const String& levels, PZEM004Tv30& sensor) :
-              AbstractSensor(name, levels),
-              PzemSensor(sensor) {};
-
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
-              {
-                float currentValue = sensor->current();
-                if(isnan(currentValue))
-                  currentValue = -1;
-
-                checkDiffer(currentValue, diff) && currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
+                //  setValue(doc, section, sensor->voltage(), "voltage");               
+                //  setValue(doc, section, sensor->current(), "current");
               };
         };
   };
