@@ -78,27 +78,37 @@
             };
       };
 
+
     struct JsonFieldLevel
       {
-        const char* name;
-        const uint8_t index;
+        public:
+          const char* name;
+          uint8_t size;
+          char** jsonLevels;
+
+          JsonFieldLevel(const char* name, uint8_t size)
+            {
+              this->name = name;
+              this->size = size;
+              this->jsonLevels = new char* [size];
+            };
+
+          ~JsonFieldLevel() {};
       };
 
     struct MultipleAbstractType
       {
         private:
-          uint8_t* jsonFieldsSize;  // [{"name": "w", "index": 0}, {"name": "q", "index": 1}]
-          char*** jsonFieldsArray;  // [["w", "w", "w"], ["q", "q"]]
+          JsonFieldLevel** jsonFields = nullptr;
           uint8_t fillIndex = 0;
-
-          template <class Field> void add(const Field& field)
-            {
-              addField(field);
-            };
 
           void addField(const String* levelConfig)
             {
-              char** jsonLevels = new char* [std::count(levelConfig[0].begin(), levelConfig[0].end(), '.')];
+              JsonFieldLevel* newField = new JsonFieldLevel (
+                levelConfig[1].c_str(),
+                std::count(levelConfig[0].begin(), levelConfig[0].end(), '.')+1
+              );
+
               char levelCharArray[levelConfig[0].length()];
               strcpy(levelCharArray, levelConfig[0].c_str());
 
@@ -107,38 +117,57 @@
 
               while(token)
                 {
-                  jsonLevels[index] = new char[strlen(token)+1];
-                  strcpy(jsonLevels[index], token);
+                  newField->jsonLevels[index] = new char[strlen(token)+1];
+                  strcpy(newField->jsonLevels[index], token);
                   token = strtok(NULL, ".");
                   index++;
                 };
-
-              jsonFieldsArray[fillIndex] = jsonLevels;
-              jsonFieldsSize[fillIndex] = index;
+              jsonFields[fillIndex] = newField;
               fillIndex++;
             };
 
         public:
+          MultipleAbstractType() {};
+          ~MultipleAbstractType() {};
+
+          template <class Field> void add(const Field& field)
+            {
+              if(jsonFields == nullptr)
+                jsonFields = new JsonFieldLevel* [1];
+
+              addField(field);
+            };
+
           // Should be called at least ones
           template<class FirstField, class ...Fields> void add(const FirstField& firstField, const Fields& ...args)
             {
-              uint8_t argsSize = sizeof...(args) + 1;
-              jsonFieldsSize = new uint8_t[argsSize];
-              jsonFieldsArray = new char** [argsSize];
-
+              jsonFields = new JsonFieldLevel* [sizeof...(args)+1];
               addField(firstField);
               add(args...);
             };
 
-          ~MultipleAbstractType() {};
+          int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
+            {              
+              if(jsonFields == nullptr)
+                return -1;
 
-          int setValue(JsonDocument& doc, const char* section, auto value, uint8_t levelIndex=0)
-            {
+              JsonFieldLevel* searchedField = nullptr;
+              if(name == nullptr)
+                searchedField = jsonFields[0];
+              else
+                for(uint8_t index = 0; index < fillIndex; index++)
+                  {                    
+                    if(!strcmp(jsonFields[index]->name, name))
+                      searchedField = jsonFields[index];                      
+                  };
+
+              if(searchedField == nullptr)
+                return -2;
+
               auto docSection = doc[section];
-              char** jsonLevels = jsonFieldsArray[levelIndex];
-
-              //Todo: needs a better solution              
-              switch(jsonFieldsSize[levelIndex])
+              char** jsonLevels = searchedField->jsonLevels;
+              //Todo: needs a better solution
+              switch(searchedField->size)
                 {
                   case(1):
                     docSection[jsonLevels[0]] = value;
@@ -153,10 +182,9 @@
                     docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
                     break;
                   default:
-                    return -1;
+                    return -3;
                 };
               return true;
             };
-
       };
 #endif
