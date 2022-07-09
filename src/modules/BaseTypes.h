@@ -104,8 +104,11 @@
 
           void addField(const String* levelConfig)
             {
+              char* name = new char[levelConfig[1].length()];
+              strcpy(name, levelConfig[1].c_str());
+
               JsonFieldLevel* newField = new JsonFieldLevel (
-                levelConfig[1].c_str(),
+                name,
                 std::count(levelConfig[0].begin(), levelConfig[0].end(), '.')+1
               );
 
@@ -140,7 +143,7 @@
 
           // Should be called at least ones
           template<class FirstField, class ...Fields> void add(const FirstField& firstField, const Fields& ...args)
-            {
+            {                            
               jsonFields = new JsonFieldLevel* [sizeof...(args)+1];
               addField(firstField);
               add(args...);
@@ -149,7 +152,7 @@
           int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
             {              
               if(jsonFields == nullptr)
-                return -1;
+                return -1;  // Not configured
 
               JsonFieldLevel* searchedField = nullptr;
               if(name == nullptr)
@@ -157,12 +160,13 @@
               else
                 for(uint8_t index = 0; index < fillIndex; index++)
                   {                    
+                    Serial.println(jsonFields[index]->name);
                     if(!strcmp(jsonFields[index]->name, name))
                       searchedField = jsonFields[index];                      
                   };
 
               if(searchedField == nullptr)
-                return -2;
+                return -2;  // Unable to search
 
               auto docSection = doc[section];
               char** jsonLevels = searchedField->jsonLevels;
@@ -182,7 +186,7 @@
                     docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
                     break;
                   default:
-                    return -3;
+                    return -3;  // Not supported size
                 };
               return true;
             };
