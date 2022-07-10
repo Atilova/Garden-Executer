@@ -80,32 +80,38 @@
 
 
 //* new version
+    typedef std::function<void(void*)> DifferType;
 
-    typedef std::function<void(void)> DifferType;
-
-    template<typename T> T* useType(T defaultValue) 
-      {        
+    template<typename T> T* useType(T defaultValue)
+      {
         T* typePointer = &defaultValue;
         return typePointer;
       };
 
     template<typename ValType> struct LastMeasuring
-      {
-        ValType lastValue;
+      {        
+        protected:
+          constexpr static const char arr[] = "error";  // Error phrase
 
-        LastMeasuring(ValType initValue) 
-          {
-            lastValue = initValue;
-          };
+        private:
+          ValType lastValue;
 
-        ~LastMeasuring() {};
+        public:
+          LastMeasuring(ValType initValue)
+            {
+              lastValue = initValue;
+            };
 
-        void getDiffer(void)
-          {
-            Serial.print("Here -> ");
-            Serial.println(lastValue);
-          };    
+          ~LastMeasuring() {};
 
+          void getDiffer(void* param)
+            {
+              ValType* currentValue = static_cast<ValType*>(param);
+
+              Serial.print("Am I In? -> ");
+              Serial.println(*currentValue);
+              Serial.println(lastValue);
+            };
       };
 
 
@@ -120,7 +126,13 @@
 
           JsonFieldLevel() {};
 
-          template<typename T> JsonFieldLevel(T* typePointer, const char* name, const String& strLevels)
+          template<typename T> JsonFieldLevel(T* typePointer, const char* name, const String& strLevels) :
+            JsonFieldLevel(name, strLevels)
+            {
+              myPtr = std::bind(&LastMeasuring<T>::getDiffer, new LastMeasuring<T> {*typePointer}, std::placeholders::_1);
+            };
+
+          JsonFieldLevel(const char* name, const String& strLevels)
             {
               this->name = name;
               this->size = std::count(strLevels.begin(), strLevels.end(), '.') + 1;
@@ -139,8 +151,6 @@
                   token = strtok(NULL, ".");
                   index++;
                 };
-
-              myPtr = std::bind(&LastMeasuring<T>::getDiffer, new LastMeasuring<T> {*typePointer});              
             };
 
           ~JsonFieldLevel() {};
@@ -174,21 +184,14 @@
           // Should be called at least ones
           template<class FirstField, class ...Fields> void add(const FirstField& firstField, const Fields& ...args)
             {
-              jsonFields = new JsonFieldLevel* [sizeof...(args)+1];
+              if(jsonFields == nullptr)
+                jsonFields = new JsonFieldLevel* [sizeof...(args)+1];
 
               addField(firstField);
               add(args...);
             };
 
-          void show(void)
-            {
-              for(uint8_t index = 0; index < fillIndex; index++)
-                {
-                  Serial.print("Name -> ");              
-                  Serial.println(jsonFields[index]->name);
-                  jsonFields[index]->myPtr();
-                };
-            };
+         
 
           // int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
           //   {
@@ -231,6 +234,24 @@
           //       };
           //     return true;
           //   };
+
+
+        void show(void)
+        {
+          for(uint8_t index = 0; index < fillIndex; index++)
+            {
+              JsonFieldLevel* test = jsonFields[index];
+              Serial.print("Name -> ");
+              Serial.println(test->name);
+              // if(test->myPtr != nullptr)
+                // test->myPtr();
+
+
+              // DifferType ass = jsonFields[index]->myPtr;
+              // if(ass != nullptr)
+              //   ass();
+            };
+        };
       };
 #endif
 

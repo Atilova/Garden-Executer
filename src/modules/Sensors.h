@@ -194,7 +194,7 @@
             MultipleAbstractSensor(const char* name)
               {
                 this->name = name;
-              };            
+              };
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) {};
         };
@@ -215,19 +215,21 @@
               MultipleAbstractSensor(name)
               {
                 this->sensor = &sensor;
-                                
+
                 MultipleAbstractType::add(
                   new JsonFieldLevel({useType<int16_t>(0), "voltage", jsonVoltageLevel}),
-                  new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel})               
+                  new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel}),
+                  new JsonFieldLevel({useType<String>("init val"), "more", "qw.er.ty.ui.op"}),
+                  new JsonFieldLevel({"qw", "qq.ww.ee"})
                 );
 
-                show();
+                // show();
               };
             ~PzemSensor() {};
 
             virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
               {
-                //  setValue(doc, section, sensor->voltage(), "voltage");               
+                //  setValue(doc, section, sensor->voltage(), "voltage");
                 //  setValue(doc, section, sensor->current(), "current");
               };
         };
