@@ -45,10 +45,12 @@ AbstractSensor* sensorsList[] =
   };
 
 
+PzemSensor pzemX {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor};
 void setup()
   {
     Serial.begin(115200);
     Serial.println();
+    delay(1000);    
 
     // Wire.begin();
     // powerBoardI2C.writeGPIOAB(0xfff);
@@ -58,71 +60,13 @@ void setup()
     // relays.configure(relaysList, len(relaysList), "relays", doc);
     // sensors.configure(sensorsList, len(sensorsList), "sensors", doc);
 
-    delay(1000);
-    PzemSensor pzemX {"PZEM_VOLTAGE", "voltage.stabilizer.ac", "pumps.wellCurrent", pzemSensor};
-    // pzemX.measure(doc, "sensors", false);
-    // serializeJsonPretty(doc, Serial);
   };
 
 void loop()
   {
-
+    pzemX.measure(doc, true, "sensors");
+    if(!doc.isNull())
+      serializeJsonPretty(doc, Serial);
+    doc.clear();
+    delay(2000);
   };
-
-  
-// template<typename T> T* var(T defaultVal) {
-//   T* ptr = &defaultVal;
-//   Serial.println(*ptr);
-//   T* val =  static_cast<T*>(ptr);
-//   Serial.println(*val);
-//   return val;
-// };
-// template<typename T> T* var(T defaultVal) {
-  // T* ptr = &defaultVal;
-  // return ptr;
-  // Serial.println(*ptr);
-  // T* val =  static_cast<T*>(ptr);
-  // Serial.println(*val);
-  // return val;
-// };
-
-// class C 
-//   {
-//     template<class T> C(T*)
-//       {
-
-//       };
-//   };
-
-// template<typename T> T* var() {
-//   return static_cast<T*>(nullptr);
-// };
-
-// class C
-//   {
-//     public:
-//       template<typename T> C(T* s) {
-//         Serial.print("Q -> ");
-
-//         T x = *s;
-//         Serial.println(x);
-//       };
-//   };
-
-// String* a = var<String>("hey");
-// Serial.println(*a);
-
-// new C {var<String>("hey")};
-// new C {var<int>(10)};
-
-// new C {var<boolean>()};
-// new C {var<float>()};
-// new C {var<char>()};
-// new C {var<char*>()};
-  // };
-
-  // template<class...>struct types{using type=types;};
-  // auto (*TOKEN)(void)
-// auto qw = std::bind(&ReturnType<String>::caller, x);
-// auto* anotherX = qw();
-// Serial.println(anotherX->lastType);

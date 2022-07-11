@@ -80,37 +80,62 @@
 
 
 //* new version
-    typedef std::function<void(void*)> DifferType;
 
-    template<typename T> T* useType(T defaultValue)
+    #define FIELD_NOT_CHANGED 0
+    #define FIELD_NESTED_SIZE_TOO_BIG -1
+    #define FIELD_SET 1
+
+    typedef std::function<boolean(void*, boolean, boolean)> CheckDifferCallback;
+
+    template<typename ValType> ValType* useType(ValType defaultValue)
       {
-        T* typePointer = &defaultValue;
+        ValType* typePointer = &defaultValue;
         return typePointer;
       };
 
-    template<typename ValType> struct LastMeasuring
-      {        
-        protected:
-          constexpr static const char arr[] = "error";  // Error phrase
-
+    template<typename ValType> struct MeasuringExtension
+      {
         private:
           ValType lastValue;
+          int isError = -1;  // First start
 
         public:
-          LastMeasuring(ValType initValue)
+          MeasuringExtension(ValType initValue)
             {
               lastValue = initValue;
             };
 
-          ~LastMeasuring() {};
+          ~MeasuringExtension() {};
 
-          void getDiffer(void* param)
+          boolean checkDiffer(void* valuePointer, boolean diff, boolean deviceError=false)
             {
-              ValType* currentValue = static_cast<ValType*>(param);
+              ValType* currentValue = static_cast<ValType*>(valuePointer);
 
-              Serial.print("Am I In? -> ");
-              Serial.println(*currentValue);
-              Serial.println(lastValue);
+              if(!diff || isError == -1)  // if error -1 (first update) allow to set value
+                {
+                  isError = deviceError;  // Lock if error occurred
+                  if(!deviceError)  // If was an error (void* valuePointer=nullptr), prevent to set lastValue as nullptr
+                    lastValue = *currentValue;
+                  return true;  // Allow to set value/error
+                }
+
+              if(deviceError)
+                {
+                  if(isError)
+                    return false;  // Already locked, diff=false (still error on device)
+                  else
+                    {
+                      isError = true;  // Error occurred, lock. Allow to set error
+                      return true;
+                    };
+                }
+                else if(isError || lastValue != *currentValue)  // If previously was error, unlock it. Or if value changed
+                  {
+                    isError = false;
+                    lastValue = *currentValue;
+                    return true;
+                  };
+              return false;
             };
       };
 
@@ -118,18 +143,24 @@
     struct JsonFieldLevel
       {
         public:
-          void* lastValue;
+          constexpr static const char* ERROR = "error";  // Error phrase
           const char* name;
           uint8_t size;
           char** jsonLevels;
-          DifferType myPtr;
+          CheckDifferCallback differCallback = nullptr;
 
           JsonFieldLevel() {};
 
           template<typename T> JsonFieldLevel(T* typePointer, const char* name, const String& strLevels) :
             JsonFieldLevel(name, strLevels)
             {
-              myPtr = std::bind(&LastMeasuring<T>::getDiffer, new LastMeasuring<T> {*typePointer}, std::placeholders::_1);
+              differCallback = std::bind(
+                &MeasuringExtension<T>::checkDiffer,
+                new MeasuringExtension<T> {*typePointer},
+                std::placeholders::_1,
+                std::placeholders::_2,
+                std::placeholders::_3
+              );
             };
 
           JsonFieldLevel(const char* name, const String& strLevels)
@@ -169,6 +200,67 @@
               fillIndex++;
             };
 
+          struct SearchField
+            {
+              public:
+                boolean isFound;
+                JsonFieldLevel* field;
+
+                SearchField(const char* name, MultipleAbstractType* _this)
+                  {
+                    if(name == nullptr)
+                      {
+                        this->field = _this->jsonFields[0];
+                        this->isFound = true;
+                        return;
+                      }
+                      else
+                        for(uint8_t index = 0; index < _this->fillIndex; index++)
+                          {
+                            if(!strcmp(_this->jsonFields[index]->name, name))
+                              {
+                                this->field = _this->jsonFields[index];
+                                this->isFound = true;
+                                return;
+                              };
+                          };
+                    this->isFound = false;
+                  };
+
+              ~SearchField() {};
+            };
+
+          int setJson(JsonDocument& doc, const char* section, JsonFieldLevel* jsonField, auto& value)
+            {
+              if(section == nullptr)
+                return setJson(&doc, jsonField, value);              
+              auto docSection = doc[section];
+              return setJson(&docSection, jsonField, value);
+            };
+
+          int setJson(auto* doc, JsonFieldLevel* jsonField, auto& value)
+            {
+              char** jsonLevels = jsonField->jsonLevels;
+              switch(jsonField->size)
+                {
+                  case(1):
+                    (*doc)[jsonLevels[0]] = value;
+                    break;
+                  case(2):
+                    (*doc)[jsonLevels[0]][jsonLevels[1]] = value;
+                    break;
+                  case(3):
+                    (*doc)[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]] = value;
+                    break;
+                  case(4):
+                    (*doc)[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
+                    break;
+                  default:
+                    return FIELD_NESTED_SIZE_TOO_BIG;  // Not supported size
+                };
+              return FIELD_SET;
+            };
+
         public:
           MultipleAbstractType() {};
           ~MultipleAbstractType() {};
@@ -181,7 +273,7 @@
               addField(field);
             };
 
-          // Should be called at least ones
+          // Should be called at least ones for one device (jsonFields[SIZE] won't be able to store more)
           template<class FirstField, class ...Fields> void add(const FirstField& firstField, const Fields& ...args)
             {
               if(jsonFields == nullptr)
@@ -191,69 +283,29 @@
               add(args...);
             };
 
-         
-
-          // int setValue(JsonDocument& doc, const char* section, auto value, const char* name=nullptr)
-          //   {
-          //     if(jsonFields == nullptr)
-          //       return -1;  // Not configured
-
-          //     JsonFieldLevel* searchedField = nullptr;
-          //     if(name == nullptr)
-          //       searchedField = jsonFields[0];
-          //     else
-          //       for(uint8_t index = 0; index < fillIndex; index++)
-          //         {
-          //           Serial.println(jsonFields[index]->name);
-          //           if(!strcmp(jsonFields[index]->name, name))
-          //             searchedField = jsonFields[index];
-          //         };
-
-          //     if(searchedField == nullptr)
-          //       return -2;  // Unable to search
-
-          //     auto docSection = doc[section];
-          //     char** jsonLevels = searchedField->jsonLevels;
-          //     //Todo: needs a better solution
-          //     switch(searchedField->size)
-          //       {
-          //         case(1):
-          //           docSection[jsonLevels[0]] = value;
-          //           break;
-          //         case(2):
-          //           docSection[jsonLevels[0]][jsonLevels[1]] = value;
-          //           break;
-          //         case(3):
-          //           docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]] = value;
-          //           break;
-          //         case(4):
-          //           docSection[jsonLevels[0]][jsonLevels[1]][jsonLevels[2]][jsonLevels[3]] = value;
-          //           break;
-          //         default:
-          //           return -3;  // Not supported size
-          //       };
-          //     return true;
-          //   };
-
-
-        void show(void)
-        {
-          for(uint8_t index = 0; index < fillIndex; index++)
+          int setValue(JsonDocument& doc, const char* section, auto value, boolean diff, const char* name=nullptr)
             {
-              JsonFieldLevel* test = jsonFields[index];
-              Serial.print("Name -> ");
-              Serial.println(test->name);
-              // if(test->myPtr != nullptr)
-                // test->myPtr();
+              SearchField result(name, this);
+              if(!result.isFound)
+                return -1;
 
-
-              // DifferType ass = jsonFields[index]->myPtr;
-              // if(ass != nullptr)
-              //   ass();
+              CheckDifferCallback callback = result.field->differCallback;
+              return (callback == nullptr || callback(static_cast<void*>(&value), diff, false))
+                ? setJson(doc, section, result.field, value)
+                : FIELD_NOT_CHANGED;
+              
             };
-        };
+
+          int setError(JsonDocument& doc, const char* section, boolean diff, const char* name=nullptr, const char* error=JsonFieldLevel::ERROR)
+            {
+              SearchField result(name, this);
+              if(!result.isFound)
+                return -1;
+
+              CheckDifferCallback callback = result.field->differCallback;
+              return (callback == nullptr || callback(static_cast<void*>(nullptr), diff, true))
+                ? setJson(doc, section, result.field, error)
+                : FIELD_NOT_CHANGED;
+            };
       };
 #endif
-
-
-

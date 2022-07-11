@@ -188,24 +188,21 @@
 
       struct MultipleAbstractSensor: public MultipleAbstractType
         {
-          public:
+          protected:
             const char* name;
 
+          public:
             MultipleAbstractSensor(const char* name)
               {
                 this->name = name;
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) {};
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section=nullptr) {};
         };
 
 
       struct PzemSensor : public MultipleAbstractSensor
         {
-          protected:
-            static const int ERROR = -1;
-            static const uint32_t VOLTAGE_ERROR_CODE = 2174483647;
-
           private:
             const char* name;
             PZEM004Tv30* sensor;
@@ -217,20 +214,25 @@
                 this->sensor = &sensor;
 
                 MultipleAbstractType::add(
-                  new JsonFieldLevel({useType<int16_t>(0), "voltage", jsonVoltageLevel}),
-                  new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel}),
-                  new JsonFieldLevel({useType<String>("init val"), "more", "qw.er.ty.ui.op"}),
-                  new JsonFieldLevel({"qw", "qq.ww.ee"})
+                  new JsonFieldLevel({useType<uint16_t>(0), "voltage", jsonVoltageLevel}),
+                  new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel})
                 );
-
-                // show();
               };
             ~PzemSensor() {};
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
-                //  setValue(doc, section, sensor->voltage(), "voltage");
-                //  setValue(doc, section, sensor->current(), "current");
+                float voltageValue = sensor->voltage();
+                if(isnan(voltageValue))
+                  setError(doc, section, diff, "voltage");
+                else
+                  setValue(doc, section, uint16_t(round(voltageValue)), diff, "voltage");
+
+                float currentValue = sensor->current();
+                if(isnan(currentValue))
+                  setError(doc, section, diff, "current");
+                else
+                  setValue(doc, section, currentValue, diff, "current");
               };
         };
   };
