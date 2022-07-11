@@ -7,6 +7,11 @@
   #include <iostream>
   #include <functional>
 
+  #define FIELD_NOT_CHANGED 0
+  #define FIELD_NESTED_SIZE_TOO_BIG -1
+  #define FIELD_SET 1
+
+
   class BaseController
     {
       public:
@@ -25,66 +30,7 @@
             this->doc = &doc;
           };
       };
-
-    struct AbstractType
-      {
-        public:
-          char** jsonNestedLevels;
-          uint8_t jsonNestedLevelsSize = 1;
-
-          AbstractType(const String& levels)
-            {
-              this->jsonNestedLevelsSize += std::count(levels.begin(), levels.end(), '.');
-              this->jsonNestedLevels = new char* [jsonNestedLevelsSize];
-
-              char levelCharArray[levels.length()];
-              strcpy(levelCharArray, levels.c_str());
-
-              char* token = strtok(levelCharArray, ".");
-              uint8_t index = 0;
-
-              while(token)
-                {
-                  jsonNestedLevels[index] = new char[strlen(token)+1];
-                  strcpy(jsonNestedLevels[index], token);
-                  token = strtok(NULL, ".");
-                  index++;
-                };
-            };
-          ~AbstractType() {};
-
-          int setValue(JsonDocument& doc, const char* section, auto value)
-            {
-              //Todo: needs a better solution
-              auto docSection = doc[section];
-              switch(jsonNestedLevelsSize)
-                {
-                  case(1):
-                    docSection[jsonNestedLevels[0]] = value;
-                    break;
-                  case(2):
-                    docSection[jsonNestedLevels[0]][jsonNestedLevels[1]] = value;
-                    break;
-                  case(3):
-                    docSection[jsonNestedLevels[0]][jsonNestedLevels[1]][jsonNestedLevels[2]] = value;
-                    break;
-                  case(4):
-                    docSection[jsonNestedLevels[0]][jsonNestedLevels[1]][jsonNestedLevels[2]][jsonNestedLevels[3]] = value;
-                    break;
-                  default:
-                    return -1;
-                };
-              return true;
-            };
-      };
-
-
-//* new version
-
-    #define FIELD_NOT_CHANGED 0
-    #define FIELD_NESTED_SIZE_TOO_BIG -1
-    #define FIELD_SET 1
-
+    
     typedef std::function<boolean(void*, boolean, boolean)> CheckDifferCallback;
 
     template<typename ValType> ValType* useType(ValType defaultValue)
@@ -188,7 +134,7 @@
       };
 
 
-    struct MultipleAbstractType
+    struct AbstractType
       {
         private:
           JsonFieldLevel** jsonFields = nullptr;
@@ -206,7 +152,7 @@
                 boolean isFound;
                 JsonFieldLevel* field;
 
-                SearchField(const char* name, MultipleAbstractType* _this)
+                SearchField(const char* name, AbstractType* _this)
                   {
                     if(name == nullptr)
                       {
@@ -262,8 +208,8 @@
             };
 
         public:
-          MultipleAbstractType() {};
-          ~MultipleAbstractType() {};
+          AbstractType() {};
+          ~AbstractType() {};
 
           template <class Field> void add(const Field& field)
             {
@@ -283,7 +229,7 @@
               add(args...);
             };
 
-          int setValue(JsonDocument& doc, const char* section, auto value, boolean diff, const char* name=nullptr)
+          int setValue(JsonDocument& doc, const char* section, auto value, boolean diff=false, const char* name=nullptr)
             {
               SearchField result(name, this);
               if(!result.isFound)
@@ -293,10 +239,9 @@
               return (callback == nullptr || callback(static_cast<void*>(&value), diff, false))
                 ? setJson(doc, section, result.field, value)
                 : FIELD_NOT_CHANGED;
-              
             };
 
-          int setError(JsonDocument& doc, const char* section, boolean diff, const char* name=nullptr, const char* error=JsonFieldLevel::ERROR)
+          int setError(JsonDocument& doc, const char* section, boolean diff=false, const char* name=nullptr, const char* error=JsonFieldLevel::ERROR)
             {
               SearchField result(name, this);
               if(!result.isFound)
