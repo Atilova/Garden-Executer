@@ -16,9 +16,12 @@ namespace systemRelays
           const char* name;  // имя, через которое будем общаться с масяней
           boolean level;  // уровень сигнала управления платой реле (LOW, HIGH)
 
-          Relay(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, uint8_t pinOutput, boolean level=LOW) :
-            AbstractType(jsonLevels)
+          Relay(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, uint8_t pinOutput, boolean level=LOW)
             {
+              AbstractType::add(
+                new JsonFieldLevel({"", jsonLevels})
+              );
+              
               this->name = name;
               this->board = &board;
               this->pinOutput = pinOutput;
