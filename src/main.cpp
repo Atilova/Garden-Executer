@@ -38,35 +38,35 @@ Relay relaysList[] =
 
 AbstractSensor* sensorsList[] =
   {
-    // new DigitalSensorI2C {"SENSOR1", "tank.level.top", sensorsBoardI2C, 1},
-    // new SensorDallasTemperatureOneWire {"TEMPERATURE1", "temperature.power", dallasTemperatureSensors, powerBoxThermometer, 9},
-    // new SensorWaterFlow {"WELL_FLOW", "pumps.wellFlow", 34},
-    // new SensorWaterPressure {"WATER_PRESSURE", "pumps.gardenPressure", 32},
+    new DigitalSensorI2C {"SENSOR1", "tank.level.top", sensorsBoardI2C, 1},
+    new SensorDallasTemperatureOneWire {"TEMPERATURE1", "temperature.power", dallasTemperatureSensors, powerBoxThermometer, 9},
+    new SensorWaterFlow {"WELL_FLOW", "pumps.wellFlow", 34},
+    new SensorWaterPressure {"WATER_PRESSURE", "pumps.gardenPressure", 32},
+    new PzemSensor {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor}
   };
 
-
-PzemSensor pzemX {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor};
 void setup()
   {
     Serial.begin(115200);
     Serial.println();
     delay(1000);    
 
-    // Wire.begin();
-    // powerBoardI2C.writeGPIOAB(0xfff);
-    // powerBoardI2C.begin(0x0);  // Плата управления силовыми реле сист. полива
-    // sensorsBoardI2C.begin(0x2);  // Сигналы от датчиков обратной связи
-    // dallasTemperatureSensors.begin();
-    // relays.configure(relaysList, len(relaysList), "relays", doc);
-    // sensors.configure(sensorsList, len(sensorsList), "sensors", doc);
-
+    Wire.begin();
+    powerBoardI2C.writeGPIOAB(0xfff);
+    powerBoardI2C.begin(0x0);  // Плата управления силовыми реле сист. полива
+    sensorsBoardI2C.begin(0x2);  // Сигналы от датчиков обратной связи
+    dallasTemperatureSensors.begin();
+    relays.configure(relaysList, len(relaysList), "relays", doc);
+    sensors.configure(sensorsList, len(sensorsList), "sensors", doc);
   };
 
 void loop()
   {
-    pzemX.measure(doc, true, "sensors");
+    sensors.measureAll();
     if(!doc.isNull())
-      serializeJsonPretty(doc, Serial);
-    doc.clear();
+      {
+        serializeJsonPretty(doc, Serial);
+        doc.clear();
+      };
     delay(2000);
   };
