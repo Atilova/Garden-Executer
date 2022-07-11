@@ -16,31 +16,14 @@
           public:
             const char* name;
 
-            AbstractSensor(const char* name, const String& jsonLevels) :
-              AbstractType(jsonLevels)
+            AbstractSensor(const char* name)
               {
                 this->name = name;
               };
+
             ~AbstractSensor() {};
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) {};
-        };
-
-
-      template<class RT> struct BaseSensor
-        {
-          public:
-            RT lastValue;
-
-            boolean checkDiffer(RT currentValue, boolean diff)
-              {
-                if(!diff || (diff && currentValue != lastValue))
-                  {
-                    lastValue = currentValue;
-                    return true;
-                  };
-                  return false;
-              };
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) {};
         };
 
 
@@ -63,7 +46,7 @@
                     AbstractSensor* sensor = list[sensorIndex];
                     if(sensor->name == name)
                       {
-                        sensor -> measure(*doc, moduleNamespace, diff);
+                        sensor -> measure(*doc, diff, moduleNamespace);
                         return true;
                       };
                   };
@@ -72,13 +55,12 @@
 
             void measureAll(boolean diff=true) {
               for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
-                list[sensorIndex] -> measure(*doc, moduleNamespace, diff);
+                list[sensorIndex] -> measure(*doc, diff, moduleNamespace);
             };
         };
 
 
-      struct DigitalSensorI2C : private BaseSensor<uint8_t>,
-                                public AbstractSensor
+      struct DigitalSensorI2C : public AbstractSensor
         {
           private:
             Adafruit_MCP23017* board;
@@ -86,23 +68,26 @@
 
           public:
             DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
-              AbstractSensor(name, jsonLevels)
+              AbstractSensor(name)
               {
                 this->board = &board;
                 this->pinOutput = pinOutput;
                 this->board->pinMode(pinOutput, INPUT_PULLUP);
+
+                AbstractType::add(
+                  new JsonFieldLevel({useType<boolean>(false), "", jsonLevels})                  
+                );
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine
-                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+                setValue(doc, section, currentValue, diff);
               };
         };
 
 
-      struct SensorDallasTemperatureOneWire : private BaseSensor<float>,
-                                              public AbstractSensor
+      struct SensorDallasTemperatureOneWire : public AbstractSensor
         {
           static const int ERROR = -127;
           private:
@@ -110,56 +95,61 @@
             DallasTemperature* controller;
 
           public:
-            SensorDallasTemperatureOneWire(const char* name, const String& levels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
-              AbstractSensor(name, levels)
+            SensorDallasTemperatureOneWire(const char* name, const String& jsonLevels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
+              AbstractSensor(name)
               {
                 this->controller = &controller;
                 this->deviceAddress = &address;
                 if(!controller.isConnected(address))
                   return;
+
                 controller.setResolution(address, resolution);
+                AbstractType::add(
+                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})                  
+                );
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
-                float currentValue = controller->getTempC(*deviceAddress);
-                if(checkDiffer(currentValue, diff))
-                  currentValue == ERROR ? setValue(doc, section, "error") : setValue(doc, section, currentValue);
+                float currentValue = controller->getTempC(*deviceAddress);                
+                currentValue == ERROR ? setError(doc, section, diff) : setValue(doc, section, currentValue, diff);
               };
         };
 
 
-      struct SensorWaterFlow : private BaseSensor<float>,
-                               public AbstractSensor
+      struct SensorWaterFlow : public AbstractSensor
         {
           static const int ERROR = 0;
           private:
             uint8_t pinInput;
 
           public:
-            SensorWaterFlow(const char* name, const String& levels, uint8_t pinInput) :
-              AbstractSensor(name, levels)
+            SensorWaterFlow(const char* name, const String& jsonLevels, uint8_t pinInput) :
+              AbstractSensor(name)
               {
                 this->pinInput = pinInput;
                 pinMode(pinInput, INPUT);
+
+                AbstractType::add(
+                  new JsonFieldLevel({useType<uint16_t>(0), "", jsonLevels})                  
+                );
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 float totalPulse = pulseIn(pinInput, HIGH) + pulseIn(pinInput, LOW);
                 if(!totalPulse)
-                    setValue(doc, section, "error");
+                  setError(doc, section, diff);
                 else
                   {
-                    uint16_t currentValue = round(1000000 / totalPulse);
-                    checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+                    uint16_t currentValue = round(1000000 / totalPulse);                    
+                    setValue(doc, section, currentValue, diff);
                   };
               };
         };
 
 
-      struct SensorWaterPressure : private BaseSensor<float>,
-                                   public AbstractSensor
+      struct SensorWaterPressure : public AbstractSensor
         {
           private:
             static const uint8_t zeroPressureK = 0.17;
@@ -168,40 +158,28 @@
             uint8_t pinInput;
 
           public:
-            SensorWaterPressure(const char* name, const String& levels, uint8_t pinInput) :
-              AbstractSensor(name, levels)
+            SensorWaterPressure(const char* name, const String& jsonLevels, uint8_t pinInput) :
+              AbstractSensor(name)
               {
                 this->pinInput = pinInput;
+
+                AbstractType::add(
+                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})                  
+                );
               };
 
-            virtual void measure(JsonDocument& doc, const char* section, boolean diff) override
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 float decimalValue = analogRead(pinInput) * 3.333 / 4096,
                       calculatedPressure = (decimalValue - zeroPressureK) * 3.947693,  // Переводим в АТМФ
                       currentValue = calculatedPressure * (resistanceR1+resistanceR2) / resistanceR2;  // Масштабируем за счет делителя
 
                 currentValue = currentValue > 0 ? 0.00 : currentValue;
-                checkDiffer(currentValue, diff) && setValue(doc, section, currentValue);
+                setValue(doc, section, currentValue, diff);
               };
         };
-
-
-      struct MultipleAbstractSensor: public MultipleAbstractType
-        {
-          protected:
-            const char* name;
-
-          public:
-            MultipleAbstractSensor(const char* name)
-              {
-                this->name = name;
-              };
-
-            virtual void measure(JsonDocument& doc, boolean diff, const char* section=nullptr) {};
-        };
-
-
-      struct PzemSensor : public MultipleAbstractSensor
+      
+      struct PzemSensor : public AbstractSensor
         {
           private:
             const char* name;
@@ -209,11 +187,11 @@
 
           public:
             PzemSensor(const char* name, const String& jsonVoltageLevel, const String& jsonCurrentLevel, PZEM004Tv30& sensor) :
-              MultipleAbstractSensor(name)
+              AbstractSensor(name)
               {
                 this->sensor = &sensor;
 
-                MultipleAbstractType::add(
+                AbstractType::add(
                   new JsonFieldLevel({useType<uint16_t>(0), "voltage", jsonVoltageLevel}),
                   new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel})
                 );
