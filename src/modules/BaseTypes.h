@@ -57,7 +57,7 @@
             {
               ValType* currentValue = static_cast<ValType*>(valuePointer);
 
-              if(!diff || isError == -1)  // if error -1 (first update) allow to set value
+              if(!diff || isError == -1)  // if error -1 (first update) allow to set either value or error
                 {
                   isError = deviceError;  // Lock if error occurred
                   if(!deviceError)  // If was an error (void* valuePointer=nullptr), prevent to set lastValue as nullptr
@@ -242,6 +242,18 @@
             };
 
           int setError(JsonDocument& doc, const char* section, boolean diff=false, const char* name=nullptr, const char* error=JsonFieldLevel::ERROR)
+            {
+              SearchField result(name, this);
+              if(!result.isFound)
+                return -1;
+
+              CheckDifferCallback callback = result.field->differCallback;
+              return (callback == nullptr || callback(static_cast<void*>(nullptr), diff, true))
+                ? setJson(doc, section, result.field, error)
+                : FIELD_NOT_CHANGED;
+            };
+
+          int setError(JsonDocument& doc, const char* section, const char* error=JsonFieldLevel::ERROR, boolean diff=false, const char* name=nullptr)
             {
               SearchField result(name, this);
               if(!result.isFound)

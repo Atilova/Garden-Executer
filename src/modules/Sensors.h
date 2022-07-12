@@ -24,6 +24,10 @@
             ~AbstractSensor() {};
 
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) {};
+
+            // Will be called by Controller for every sensor, after controller.configure(...)
+            // Use to run pinMode, setResolution, all stuff - requires builtin arduino setup(), to make initial begin
+            virtual void setup(void);
         };
 
 
@@ -75,7 +79,7 @@
                 this->board->pinMode(pinOutput, INPUT_PULLUP);
 
                 AbstractType::add(
-                  new JsonFieldLevel({useType<boolean>(false), "", jsonLevels})                  
+                  new JsonFieldLevel({useType<boolean>(false), "", jsonLevels})
                 );
               };
 
@@ -87,51 +91,51 @@
         };
 
 
-      struct SensorDallasTemperatureOneWire : public AbstractSensor
+      struct DallasTemperatureOneWireSensor : public AbstractSensor
         {
-          static const int ERROR = -127;
+          protected:
+            static const int ERROR_CODE = -127;
+
           private:
             DeviceAddress* deviceAddress;
             DallasTemperature* controller;
 
           public:
-            SensorDallasTemperatureOneWire(const char* name, const String& jsonLevels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
+            DallasTemperatureOneWireSensor(const char* name, const String& jsonLevels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
               AbstractSensor(name)
               {
                 this->controller = &controller;
                 this->deviceAddress = &address;
-                if(!controller.isConnected(address))
-                  return;
-
                 controller.setResolution(address, resolution);
+
                 AbstractType::add(
-                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})                  
+                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})
                 );
               };
 
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
-                float currentValue = controller->getTempC(*deviceAddress);                
-                currentValue == ERROR ? setError(doc, section, diff) : setValue(doc, section, currentValue, diff);
+                controller->requestTemperatures();
+                float currentValue = controller->getTempC(*deviceAddress);
+                currentValue == ERROR_CODE ? setError(doc, section, diff) : setValue(doc, section, currentValue, diff);
               };
         };
 
 
-      struct SensorWaterFlow : public AbstractSensor
+      struct WaterFlowSensor : public AbstractSensor
         {
-          static const int ERROR = 0;
           private:
             uint8_t pinInput;
 
           public:
-            SensorWaterFlow(const char* name, const String& jsonLevels, uint8_t pinInput) :
+            WaterFlowSensor(const char* name, const String& jsonLevels, uint8_t pinInput) :
               AbstractSensor(name)
               {
                 this->pinInput = pinInput;
                 pinMode(pinInput, INPUT);
 
                 AbstractType::add(
-                  new JsonFieldLevel({useType<uint16_t>(0), "", jsonLevels})                  
+                  new JsonFieldLevel({useType<uint16_t>(0), "", jsonLevels})
                 );
               };
 
@@ -142,29 +146,30 @@
                   setError(doc, section, diff);
                 else
                   {
-                    uint16_t currentValue = round(1000000 / totalPulse);                    
+                    uint16_t currentValue = round(1000000 / totalPulse);
                     setValue(doc, section, currentValue, diff);
                   };
               };
         };
 
 
-      struct SensorWaterPressure : public AbstractSensor
+      struct WaterPressureSensor : public AbstractSensor
         {
-          private:
+          protected:
             static const uint8_t zeroPressureK = 0.17;
             static const uint16_t resistanceR1 = 1000,  // делитель 5v -> 3.3v
                                   resistanceR2 = 2000;
+          private:
             uint8_t pinInput;
 
           public:
-            SensorWaterPressure(const char* name, const String& jsonLevels, uint8_t pinInput) :
+            WaterPressureSensor(const char* name, const String& jsonLevels, uint8_t pinInput) :
               AbstractSensor(name)
               {
                 this->pinInput = pinInput;
 
                 AbstractType::add(
-                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})                  
+                  new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})
                 );
               };
 
@@ -178,9 +183,13 @@
                 setValue(doc, section, currentValue, diff);
               };
         };
-      
+
       struct PzemSensor : public AbstractSensor
         {
+          protected:
+            static const uint16_t maxAcValueOrError = 260,
+                                  maxCurrentValueOrError = 5000;
+
           private:
             const char* name;
             PZEM004Tv30* sensor;
@@ -201,13 +210,13 @@
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 float voltageValue = sensor->voltage();
-                if(isnan(voltageValue))
+                if(isnan(voltageValue) || voltageValue > maxAcValueOrError)
                   setError(doc, section, diff, "voltage");
                 else
                   setValue(doc, section, uint16_t(round(voltageValue)), diff, "voltage");
 
                 float currentValue = sensor->current();
-                if(isnan(currentValue))
+                if(isnan(voltageValue) || isnan(currentValue) || currentValue > maxCurrentValueOrError)
                   setError(doc, section, diff, "current");
                 else
                   setValue(doc, section, currentValue, diff, "current");
