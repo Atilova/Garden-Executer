@@ -27,7 +27,7 @@
 
             // Will be called by Controller for every sensor, after controller.configure(...)
             // Use to run pinMode, setResolution, all stuff - requires builtin arduino setup(), to make initial begin
-            virtual void setup(void);
+            virtual void setup(void) {};
         };
 
 
@@ -41,6 +41,8 @@
               {
                 BaseController::configure(size, moduleNamespace, doc);
                 this->list = list;
+                for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
+                    list[sensorIndex]->setup();
               };
 
             boolean measure(const char* name, boolean diff=true)
@@ -50,7 +52,7 @@
                     AbstractSensor* sensor = list[sensorIndex];
                     if(sensor->name == name)
                       {
-                        sensor -> measure(*doc, diff, moduleNamespace);
+                        sensor->measure(*doc, diff, moduleNamespace);
                         return true;
                       };
                   };
@@ -59,7 +61,7 @@
 
             void measureAll(boolean diff=true) {
               for(uint8_t sensorIndex=0; sensorIndex<listSize; sensorIndex++)
-                list[sensorIndex] -> measure(*doc, diff, moduleNamespace);
+                list[sensorIndex]->measure(*doc, diff, moduleNamespace);
             };
         };
 
@@ -76,16 +78,20 @@
               {
                 this->board = &board;
                 this->pinOutput = pinOutput;
-                this->board->pinMode(pinOutput, INPUT_PULLUP);
-
+                
                 AbstractType::add(
                   new JsonFieldLevel({useType<boolean>(false), "", jsonLevels})
                 );
               };
 
+            virtual void setup(void) override
+              {                
+                board->pinMode(pinOutput, INPUT_PULLUP);
+              };
+
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
-                uint8_t currentValue = board->digitalRead(pinOutput);  // читаем состоиние на pine
+                uint8_t currentValue = board->digitalRead(pinOutput);
                 setValue(doc, section, currentValue, diff);
               };
         };
@@ -99,6 +105,7 @@
           private:
             DeviceAddress* deviceAddress;
             DallasTemperature* controller;
+            uint8_t valueResolution;
 
           public:
             DallasTemperatureOneWireSensor(const char* name, const String& jsonLevels, DallasTemperature& controller, DeviceAddress& address, uint8_t resolution) :
@@ -106,13 +113,18 @@
               {
                 this->controller = &controller;
                 this->deviceAddress = &address;
-                controller.setResolution(address, resolution);
-
+                this->valueResolution = resolution;
+                
                 AbstractType::add(
                   new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})
                 );
               };
 
+            virtual void setup(void) override
+              {                
+                controller->setResolution(*deviceAddress, valueResolution);
+              };
+            
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 controller->requestTemperatures();
@@ -131,12 +143,16 @@
             WaterFlowSensor(const char* name, const String& jsonLevels, uint8_t pinInput) :
               AbstractSensor(name)
               {
-                this->pinInput = pinInput;
-                pinMode(pinInput, INPUT);
+                this->pinInput = pinInput;                
 
                 AbstractType::add(
                   new JsonFieldLevel({useType<uint16_t>(0), "", jsonLevels})
                 );
+              };
+
+            virtual void setup(void) override
+              {                
+                pinMode(pinInput, INPUT);
               };
 
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
