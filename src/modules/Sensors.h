@@ -6,6 +6,7 @@
   #include <Adafruit_MCP23017.h>
   #include <DallasTemperature.h>
   #include <PZEM004Tv30.h>
+  #include <Adafruit_BME280.h>
   #include "BaseTypes.h"
 
 
@@ -71,28 +72,30 @@
           private:
             Adafruit_MCP23017* board;
             uint8_t pinOutput;
+            boolean level;
 
           public:
-            DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, const uint8_t pinOutput) :
+            DigitalSensorI2C(const char* name, const String& jsonLevels, Adafruit_MCP23017& board, uint8_t pinOutput, boolean level=LOW) :
               AbstractSensor(name)
               {
                 this->board = &board;
                 this->pinOutput = pinOutput;
-                
+                this->level = level;
+
                 AbstractType::add(
                   new JsonFieldLevel({useType<boolean>(false), "", jsonLevels})
                 );
               };
 
             virtual void setup(void) override
-              {                
+              {
                 board->pinMode(pinOutput, INPUT_PULLUP);
               };
 
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 uint8_t currentValue = board->digitalRead(pinOutput);
-                setValue(doc, section, currentValue, diff);
+                setValue(doc, section, currentValue==level, diff);
               };
         };
 
@@ -114,17 +117,17 @@
                 this->controller = &controller;
                 this->deviceAddress = &address;
                 this->valueResolution = resolution;
-                
+
                 AbstractType::add(
                   new JsonFieldLevel({useType<float>(0.00), "", jsonLevels})
                 );
               };
 
             virtual void setup(void) override
-              {                
+              {
                 controller->setResolution(*deviceAddress, valueResolution);
               };
-            
+
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 controller->requestTemperatures();
@@ -143,7 +146,7 @@
             WaterFlowSensor(const char* name, const String& jsonLevels, uint8_t pinInput) :
               AbstractSensor(name)
               {
-                this->pinInput = pinInput;                
+                this->pinInput = pinInput;
 
                 AbstractType::add(
                   new JsonFieldLevel({useType<uint16_t>(0), "", jsonLevels})
@@ -151,7 +154,7 @@
               };
 
             virtual void setup(void) override
-              {                
+              {
                 pinMode(pinInput, INPUT);
               };
 
@@ -172,9 +175,9 @@
       struct WaterPressureSensor : public AbstractSensor
         {
           protected:
-            static const uint8_t zeroPressureK = 0.17;
-            static const uint16_t resistanceR1 = 1000,  // делитель 5v -> 3.3v
-                                  resistanceR2 = 2000;
+            static const uint8_t ZERO_PRESSURE_K = 0.17;
+            static const uint16_t RESISTANCE_R1 = 1000,  // делитель 5v -> 3.3v
+                                  RESISTANCE_R2 = 2000;
           private:
             uint8_t pinInput;
 
@@ -192,8 +195,8 @@
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 float decimalValue = analogRead(pinInput) * 3.333 / 4096,
-                      calculatedPressure = (decimalValue - zeroPressureK) * 3.947693,  // Переводим в АТМФ
-                      currentValue = calculatedPressure * (resistanceR1+resistanceR2) / resistanceR2;  // Масштабируем за счет делителя
+                      calculatedPressure = (decimalValue - ZERO_PRESSURE_K) * 3.947693,  // Переводим в АТМФ
+                      currentValue = calculatedPressure * (RESISTANCE_R1+RESISTANCE_R2) / RESISTANCE_R2;  // Масштабируем за счет делителя
 
                 currentValue = currentValue > 0 ? 0.00 : currentValue;
                 setValue(doc, section, currentValue, diff);
@@ -203,11 +206,10 @@
       struct PzemSensor : public AbstractSensor
         {
           protected:
-            static const uint16_t maxAcValueOrError = 260,
-                                  maxCurrentValueOrError = 5000;
+            static const uint16_t MAX_AC_VALUE_OR_ERROR = 260,
+                                  MAX_CURRENT_VALUE_OR_ERROR = 5000;
 
           private:
-            const char* name;
             PZEM004Tv30* sensor;
 
           public:
@@ -221,21 +223,61 @@
                   new JsonFieldLevel({useType<float>(0.00), "current", jsonCurrentLevel})
                 );
               };
-            ~PzemSensor() {};
 
             virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
               {
                 float voltageValue = sensor->voltage();
-                if(isnan(voltageValue) || voltageValue > maxAcValueOrError)
+                if(isnan(voltageValue) || voltageValue > MAX_AC_VALUE_OR_ERROR)
                   setError(doc, section, diff, "voltage");
                 else
                   setValue(doc, section, uint16_t(round(voltageValue)), diff, "voltage");
 
                 float currentValue = sensor->current();
-                if(isnan(voltageValue) || isnan(currentValue) || currentValue > maxCurrentValueOrError)
+                if(isnan(voltageValue) || isnan(currentValue) || currentValue > MAX_CURRENT_VALUE_OR_ERROR)
                   setError(doc, section, diff, "current");
                 else
                   setValue(doc, section, currentValue, diff, "current");
+              };
+        };
+
+
+      struct BME280WeatherSensor : public AbstractSensor
+        {
+          protected:
+            constexpr static const float PASCALS_IN_MM_HG = 133.3223;  // 1 mmHg = 133.32239 pascals
+
+          private:
+            Adafruit_BME280* sensor;
+
+          public:
+            BME280WeatherSensor(const char* name, const String& jsonTemperatureLevel, const String& jsonHumidityLevel, const String& jsonPressureLevel, Adafruit_BME280& sensor) :
+              AbstractSensor(name)
+              {
+                this->sensor = &sensor;
+
+                AbstractType::add(
+                  new JsonFieldLevel({useType<float>(0.00), "temperature", jsonTemperatureLevel}),
+                  new JsonFieldLevel({useType<float>(0.00), "humidity", jsonHumidityLevel}),
+                  new JsonFieldLevel({useType<float>(0.00), "pressure", jsonPressureLevel})
+                );
+              };
+
+            virtual void setup(void)
+              {
+                sensor->begin();
+              }
+
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
+              {
+                if(!sensor->sensorID())
+                  {
+                    setAllErrors(doc, section, diff);
+                    return;
+                  };
+
+                setValue(doc, section, sensor->readTemperature(), diff, "temperature");
+                setValue(doc, section, (sensor->readPressure() / PASCALS_IN_MM_HG), diff, "humidity");
+                setValue(doc, section, sensor->readHumidity(), diff, "pressure");
               };
         };
   };
