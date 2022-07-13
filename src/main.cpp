@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
-// #include <Adafruit_BME280.h>
+#include <Adafruit_BME280.h>
 #include <modules/Init.h>
 #include <ArduinoJson.h>
 #include <OneWire.h>
@@ -26,9 +26,7 @@ DeviceAddress powerBoxThermometer = {0x28, 0xC, 0x1, 0x7, 0x2D, 0xDA, 0x1, 0x4D}
               videoBoxThermometer = {0x28, 0x9B, 0x3, 0xB1, 0x2F, 0x14, 0x1, 0x45};  // On the long wire
 
 PZEM004Tv30 pzemSensor(Serial2, 14, 27);
-
-// Adafruit_BME280 weatherSensor;
-
+Adafruit_BME280 weatherSensor;
 
 Relay relaysList[] =
   {
@@ -46,7 +44,8 @@ AbstractSensor* sensorsList[] =
     new DallasTemperatureOneWireSensor {"TEMPERATURE2", "temperature.video", dallasTemperatureSensors, videoBoxThermometer, 9},
     new WaterFlowSensor {"WELL_FLOW", "pumps.wellFlow", 34},
     new WaterPressureSensor {"WATER_PRESSURE", "pumps.gardenPressure", 32},
-    new PzemSensor {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor}
+    new PzemSensor {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor},
+    new BME280WeatherSensor {"WEATHER_SENSOR", "weather.temperature", "weather.humidity", "weather.pressure", weatherSensor}
   };
 
 void measure()
@@ -69,7 +68,7 @@ void setup()
     powerBoardI2C.begin(0x0);  // Плата управления силовыми реле сист. полива
     sensorsBoardI2C.begin(0x2);  // Сигналы от датчиков обратной связи    
     relays.configure(relaysList, len(relaysList), "relays", doc);
-    sensors.configure(sensorsList, len(sensorsList), "sensors", doc);    
+    sensors.configure(sensorsList, len(sensorsList), "sensors", doc);       
   };
 
 void loop()
