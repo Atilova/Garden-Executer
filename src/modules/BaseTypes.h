@@ -7,9 +7,9 @@
   #include <iostream>
   #include <functional>
 
-  #define FIELD_NOT_CHANGED 0
-  #define FIELD_NESTED_SIZE_TOO_BIG -1
-  #define FIELD_SET 1
+  #define FIELD_NOT_CHANGED 0b0
+  #define FIELD_NESTED_SIZE_TOO_BIG -0b1
+  #define FIELD_SET 0b1
 
 
   class BaseController
@@ -264,5 +264,30 @@
                 ? setJson(doc, section, result.field, error)
                 : FIELD_NOT_CHANGED;
             };
+
+          int setAllErrors(JsonDocument& doc, const char* section, boolean diff=false, const char* error=JsonFieldLevel::ERROR)
+            {
+              for(uint8_t index = 0; index < fillIndex; index++)
+                {
+                  JsonFieldLevel* field = jsonFields[index];
+                  CheckDifferCallback callback = field->differCallback;
+                  if(
+                    (callback == nullptr || callback(static_cast<void*>(nullptr), diff, true)) && 
+                    setJson(doc, section, field, error) == FIELD_NESTED_SIZE_TOO_BIG
+                  )
+                    return FIELD_NESTED_SIZE_TOO_BIG;            
+                };
+                return FIELD_SET;
+            };  
+
+          int setAllErrors(JsonDocument& doc, const char* section, const char* error=JsonFieldLevel::ERROR)
+            {
+              for(uint8_t index = 0; index < fillIndex; index++)
+                {                  
+                  if(setJson(doc, section, jsonFields[index], error) == FIELD_NESTED_SIZE_TOO_BIG)
+                    return FIELD_NESTED_SIZE_TOO_BIG;            
+                };
+                return FIELD_SET;  
+            };   
       };
 #endif
