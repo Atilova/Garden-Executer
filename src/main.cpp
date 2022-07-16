@@ -24,7 +24,8 @@ DallasTemperature dallasTemperatureSensors(&oneWire);
 DeviceAddress powerBoxThermometer = {0x28, 0xC, 0x1, 0x7, 0x2D, 0xDA, 0x1, 0x4D}, 
               videoBoxThermometer = {0x28, 0x9B, 0x3, 0xB1, 0x2F, 0x14, 0x1, 0x45};  // On the long wire
 
-// PZEM004Tv30 pzemSensor(Serial2, 14, 27);
+// PZEM004Tv30 pzemSensor(Serial2, 15, 16);
+PZEM004Tv30 pzemSensor;
 Adafruit_BME280 weatherSensor;
 SoftwareSerial ultraSonicSensorSerial(14, 27);
 
@@ -39,13 +40,13 @@ Relay relaysList[] =
 
 AbstractSensor* sensorsList[] =
   {
-    // new DigitalSensorI2C {"SENSOR1", "tank.level.top", sensorsBoardI2C, 1},
-    // new DallasTemperatureOneWireSensor {"TEMPERATURE1", "temperature.power", dallasTemperatureSensors, powerBoxThermometer, 9},
-    // new DallasTemperatureOneWireSensor {"TEMPERATURE2", "temperature.video", dallasTemperatureSensors, videoBoxThermometer, 9},
-    // new WaterFlowSensor {"WELL_FLOW", "pumps.wellFlow", 34},
-    // new WaterPressureSensor {"WATER_PRESSURE", "pumps.gardenPressure", 32},
-    // new PzemSensor {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor},
-    // new BME280WeatherSensor {"WEATHER_SENSOR", "weather.temperature", "weather.humidity", "weather.pressure", weatherSensor},
+    new DigitalSensorI2C {"SENSOR1", "tank.level.top", sensorsBoardI2C, 1},
+    new DallasTemperatureOneWireSensor {"TEMPERATURE1", "temperature.power", dallasTemperatureSensors, powerBoxThermometer, 9},
+    new DallasTemperatureOneWireSensor {"TEMPERATURE2", "temperature.video", dallasTemperatureSensors, videoBoxThermometer, 9},
+    new WaterFlowSensor {"WELL_FLOW", "pumps.wellFlow", 34},
+    new WaterPressureSensor {"WATER_PRESSURE", "pumps.gardenPressure", 32},
+    new PzemSensor {"PZEM_VOLTAGE", "voltage.ac", "pumps.wellCurrent", pzemSensor},
+    new BME280WeatherSensor {"WEATHER_SENSOR", "weather.temperature", "weather.humidity", "weather.pressure", weatherSensor},
     new UltraSonicSensor<SoftwareSerial> {"WATER_LEVEL_SENSOR", "tank.level.sensor", ultraSonicSensorSerial}
   };
 
@@ -76,4 +77,4 @@ void loop()
   {
     measure();
     delay(2000);
-  }
+  };
