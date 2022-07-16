@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Lightning</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAADw8PAA7k8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAARERIiIQAAACIiIiIiEAAAAiIiIiIhAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAP/wAAB/8AAIP/AADB/wAA4P8AAPB/AAD4PwAA/B8AAMAPAADABwAA4AMAAPB/AAD4PwAA/B8AAP4PAAD/BwAA" rel="icon" type="image/x-icon" />
+
+  </head>
+  <body>
+    <div class="content">      
+      <a href="/logout">
+        Logout <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+    </div>
+
+    <script>
+      const l = (...args) => console.log("Info -> ", ...args);
+
+      class ArduinoWebsocket {
+        static RECONNECT_INTERVAL = 10;  // In seconds
+
+        constructor() {
+          this.startConnection();
+        };
+
+        startConnection() {
+          this.ws = new WebSocket("ws://192.168.1.112/ws/");
+          this.ws.onopen = this.onOpen;
+          this.ws.onclose = this.onClose;
+          this.ws.onerror = this.onError;
+          this.ws.onmessage = this.onMessage;
+        };
+
+        onOpen = event => {
+          l("OPEN: ", event);
+        };
+        onClose = event => {
+          l("CLOSE: ", event);
+          setTimeout(this.startConnection, ArduinoWebsocket.RECONNECT_INTERVAL*1000);
+        };
+        onError = event => {
+          l("ERROR: ", event);
+        };
+        onMessage = event => {
+          l("MESSAGE: ", JSON.parse(event.data));          
+        };
+        
+      };
+      
+      new ArduinoWebsocket();
+    </script>
+  </body>
+</html>
