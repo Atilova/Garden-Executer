@@ -9,6 +9,7 @@
   #include <Adafruit_BME280.h>
   #include "BaseTypes.h"
 
+  #define repeat(n) for(int i = n; i--;)
 
   namespace systemSensors
     {
@@ -278,6 +279,71 @@
                 setValue(doc, section, sensor->readTemperature(), diff, "temperature");
                 setValue(doc, section, (sensor->readPressure() / PASCALS_IN_MM_HG), diff, "humidity");
                 setValue(doc, section, sensor->readHumidity(), diff, "pressure");
+              };
+        };
+
+
+    template <typename SerialType> struct UltraSonicSensor : public AbstractSensor
+        {
+          protected:
+            static const int MEASURE_N_TIMES = 3;
+            constexpr static const byte REQUEST_CODE = 0x55,
+                                        HEADER_CODE = 0xff;
+
+          private:
+            SerialType* sensorSerial;
+
+          public:
+            UltraSonicSensor(const char* name, const String& jsonLevels, SerialType& espSerial) :
+              AbstractSensor(name)
+              {
+                this->sensorSerial = &espSerial;
+
+                AbstractType::add(
+                  new JsonFieldLevel({useType<uint16_t>(0.00), "", jsonLevels})
+                );
+              };
+
+            virtual void setup(void) override
+              {
+                sensorSerial->begin(9600);
+              };
+
+            virtual void measure(JsonDocument& doc, boolean diff, const char* section) override
+              {
+                uint16_t totalDistance = 0;
+                uint8_t succeededTimes = 0;
+
+                repeat(MEASURE_N_TIMES)
+                  {
+                    sensorSerial->write(REQUEST_CODE);
+                    vTaskDelay(10 / portTICK_PERIOD_MS);
+                    if(sensorSerial->available())
+                      {
+                        vTaskDelay(5 / portTICK_PERIOD_MS);
+                        if(sensorSerial->read() == HEADER_CODE)
+                          {
+                            unsigned char buffer[4] = {HEADER_CODE},
+                                          checkSum;
+
+                            for(int i = 1; i < 4; i++)
+                              buffer[i] = sensorSerial->read();
+
+                            checkSum = buffer[0] + buffer[1] + buffer[2];
+                            if(buffer[3] == checkSum)
+                              {
+                                totalDistance += (buffer[1] << 8) + buffer[2];
+                                succeededTimes++;
+                              };
+                          };
+                      };
+                    vTaskDelay(200 / portTICK_PERIOD_MS);
+                  };
+
+                if(!succeededTimes)
+                  setError(doc, section, diff);
+                else
+                  setValue(doc, section, uint16_t(round(totalDistance / succeededTimes)), diff);
               };
         };
   };
