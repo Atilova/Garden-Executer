@@ -6,50 +6,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
     <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAADw8PAA7k8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAARERIiIQAAACIiIiIiEAAAAiIiIiIhAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAP/wAAB/8AAIP/AADB/wAA4P8AAPB/AAD4PwAA/B8AAMAPAADABwAA4AMAAPB/AAD4PwAA/B8AAP4PAAD/BwAA" rel="icon" type="image/x-icon" />
-
+    <link rel="stylesheet" href="static/style.css" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />
   </head>
   <body>
-    <div class="content">      
-      <a href="/logout">
-        Logout <i class="fa-solid fa-right-from-bracket"></i>
-      </a>
-    </div>
-
-    <script>
-      const l = (...args) => console.log("Info -> ", ...args);
-
-      class ArduinoWebsocket {
-        static RECONNECT_INTERVAL = 10;  // In seconds
-
-        constructor() {
-          this.startConnection();
-        };
-
-        startConnection() {
-          this.ws = new WebSocket("ws://192.168.1.112/ws/");
-          this.ws.onopen = this.onOpen;
-          this.ws.onclose = this.onClose;
-          this.ws.onerror = this.onError;
-          this.ws.onmessage = this.onMessage;
-        };
-
-        onOpen = event => {
-          l("OPEN: ", event);
-        };
-        onClose = event => {
-          l("CLOSE: ", event);
-          setTimeout(this.startConnection, ArduinoWebsocket.RECONNECT_INTERVAL*1000);
-        };
-        onError = event => {
-          l("ERROR: ", event);
-        };
-        onMessage = event => {
-          l("MESSAGE: ", JSON.parse(event.data));          
-        };
-        
-      };
+    <main class="wrapper">
       
-      new ArduinoWebsocket();
-    </script>
+      <div class="content">
+
+        <!-- <div class="spark-state">          
+          <span class="spark-state__title">Состояние: </span>
+          <span class="spark-state__info" id="state">ничего не обнаружено</span>
+        </div> -->
+
+        <div class="spark-options">
+          <div class="spark-options__editor">
+            <span>Configuration</span>
+            <div class="spark-options__menu spark-options__menu_active">
+              <button class="spark-options__refresh" id="config-cancel">
+                <i class="fa-solid fa-arrow-rotate-right"></i>
+                Refresh
+              </button>
+              <button class="spark-options__edit" id="config-edit">
+                <i class="fa-solid fa-scissors"></i>
+                Edit
+              </button>
+            </div>
+
+            <div class="spark-options__menu">
+              <button class="spark-options__apply" id="config-apply">
+                <i class="fa-solid fa-share"></i>
+                Apply
+              </button>
+              <button class="spark-options__cancel" id="config-cancel">
+                <i class="fa-solid fa-xmark"></i>
+                Cancel
+              </button>
+            </div>
+          </div>
+          
+          <ul class="spark-options__list">
+            <li id="config-indoor" class="spark-options__setting spark-options__setting_loading">
+              <span>Location</span>
+              <select>
+                <option value="indoor">Indoor</option>
+                <option value="outdoor">Outdoor</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+            <li id="config-noise" class="spark-options__setting spark-options__setting_loading">
+              <span>Noise Level</span>
+              <select>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+            <li id="config-disturber" class="spark-options__setting spark-options__setting_loading">
+              <span>Show Disturber</span>
+              <select>
+                <option value="on">On</option>
+                <option value="off">Off</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+            <li id="config-threshold" class="spark-options__setting spark-options__setting_loading">
+              <span>Watchdog Threshold</span>
+              <select>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+            <li id="config-spike" class="spark-options__setting spark-options__setting_loading">
+              <span>Spike</span>
+              <select>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+            <li id="config-lightnings" class="spark-options__setting spark-options__setting_loading">
+              <span>Lightnings Count</span>
+              <select>
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="9">9</option>
+                <option value="16">16</option>
+              </select>
+              <div class="spark-options__loader">
+                <div class="spark-options__loader-animation"></div>
+              </div>
+            </li>
+          </ul>                    
+        </div>
+      </div>
+    </main>
+
+    <script src="static/script.js"></script>
   </body>
 </html>
