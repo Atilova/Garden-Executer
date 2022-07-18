@@ -3,6 +3,8 @@
 
   #include <EEPROM.h>
   #include <FunctionalInterrupt.h>
+  #include <ArduinoJson.h>
+  #include <SparkFun_AS3935.h>
 
   #define EEPROM_CONFIG_ADDRESS 0  // Адрес в eeprom, с которого хранится структура
 
@@ -28,11 +30,11 @@
   class SparkSensorController
     {
       private:
-        SparkConfig config;
+        SparkConfig config ;
         SparkFun_AS3935* sensor;
         uint8_t capacitor,
                 interrupPin;
-        volatile boolean sparkHasDetected = false;
+        volatile boolean sparkHasDetected = true;
 
       protected:
         void IRAM_ATTR sparkUpdateISR(void)
@@ -67,7 +69,7 @@
 
             loadEEPROM();  // true, если нужно очистить eeprom, иначе пусто
             setupConfig();
-            // showConfig();
+            showConfig();
 
             attachInterrupt(interrupPin, std::bind(&SparkSensorController::sparkUpdateISR, this), HIGH);
           };
@@ -85,35 +87,33 @@
               eraseEEPROM();
 
             if(EEPROM.read(EEPROM_CONFIG_ADDRESS))
-              {
-                EEPROM.put(EEPROM_CONFIG_ADDRESS, config);
-                EEPROM.commit();
-              }
-              else
-                EEPROM.get(EEPROM_CONFIG_ADDRESS, config);
+              updateEEPROM();
+            else
+              EEPROM.get(EEPROM_CONFIG_ADDRESS, config);
           };
 
-        void setupConfig(void)
+        void updateEEPROM()
           {
+            EEPROM.put(EEPROM_CONFIG_ADDRESS, config);
+            EEPROM.commit();
+          };
+
+
+        void setupConfig()
+          {
+            Serial.println("SETUP CONFIG");
             sensor->setIndoorOutdoor(config.indoor ? INDOOR : OUTDOOR);
             sensor->setNoiseLevel(config.noiseLevel);
             sensor->maskDisturber(!config.showDisturber);  // Инфо о наличие помех ВКЛ - false
             sensor->watchdogThreshold(config.watchdogThreshold);
             sensor->lightningThreshold(config.lightningsCount);  // Запись в модуль количества учитываемых молний за 15 мин
             sensor->spikeRejection(config.spike);
+            delay(10);
             sensor->readInterruptReg();  // Requires first read, interrupt will not work otherwise
           };
 
         void showConfig(void)
           {
-            Serial.print("valid -> "); Serial.println(config.valid);
-            Serial.print("indoor -> "); Serial.println(config.indoor);
-            Serial.print("noiseLevel -> "); Serial.println(config.noiseLevel);
-            Serial.print("showDisturber -> "); Serial.println(config.showDisturber);
-            Serial.print("watchdogThreshold -> "); Serial.println(config.watchdogThreshold);
-            Serial.print("spike -> "); Serial.println(config.spike);
-            Serial.print("lightningsCount -> "); Serial.println(config.lightningsCount);
-
             // Cчитываем значение indoor or outdoor из модуля
             Serial.print("IndoorOutdoor setup: ");
             Serial.println(sensor->readIndoorOutdoor() == INDOOR ? "*Indoor*" : "*Outdoor*");
@@ -160,7 +160,6 @@
                 case LIGHTNING:
                   {
                     uint8_t lightningDistance = sensor->distanceToStorm();
-
                     Serial.println("Spark -> LIGHTNING (молния)");
                     Serial.println(lightningDistance);
                     break;
@@ -173,5 +172,57 @@
               }
           };
 
+        SparkConfig* getConfig(void)
+          {
+            return &config;
+          };
+
+        int updateConfig(JsonDocument& doc)
+          {
+            SparkConfig temporaryConfig = config;
+
+            if(doc.containsKey("indoor") && doc["indoor"].is<boolean>())
+              temporaryConfig.indoor = doc["indoor"];
+
+            if(doc.containsKey("noiseLevel") && doc["noiseLevel"].is<uint8_t>())
+              {
+                uint8_t anySetting = doc["noiseLevel"];
+                if(anySetting < 0 || anySetting > 7)
+                  return -1;
+                temporaryConfig.noiseLevel = anySetting;
+              };
+
+            if(doc.containsKey("showDisturber") && doc["showDisturber"].is<boolean>())
+              temporaryConfig.showDisturber = doc["showDisturber"];
+
+            if(doc.containsKey("watchdogThreshold") && doc["watchdogThreshold"].is<uint8_t>())
+              {
+                uint8_t anySetting = doc["watchdogThreshold"];
+                if(anySetting < 1 || anySetting > 10)
+                  return -2;
+                temporaryConfig.watchdogThreshold = anySetting;
+              };
+
+            if(doc.containsKey("spike") && doc["spike"].is<uint8_t>())
+              {
+                uint8_t anySetting = doc["spike"];
+                if(anySetting < 1 || anySetting > 11)
+                  return -3;
+                temporaryConfig.spike = anySetting;
+              };
+
+            if(doc.containsKey("lightningsCount") && doc["lightningsCount"].is<uint8_t>())
+              {
+                uint8_t anySetting = doc["lightningsCount"];
+                if((anySetting != 1 && anySetting != 5) && (anySetting != 9 && anySetting != 16))
+                  return -4;
+                temporaryConfig.lightningsCount = anySetting;
+              };
+
+            config = temporaryConfig;
+            updateEEPROM();
+            setupConfig();
+            return true;
+          };
       };
 #endif

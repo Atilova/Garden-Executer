@@ -6,9 +6,10 @@
   #include <ESPAsyncWebServer.h>
   #include <AsyncWebSocket.h>
   #include <WiFi.h>
-  #include <Secrete.h>  
+  #include <Secrete.h>
   #include <ArduinoJson.h>
   #include "SPIFFS.h"
+  #include "Lightning.h"
 
 
   class WebsocketAPIServer
@@ -41,14 +42,15 @@
                   };
                 default:
                   break;
-              };            
+              };
           };
 
       public:
         AsyncWebSocket ws = AsyncWebSocket("/ws/");
 
       private:
-        AsyncWebServer server = AsyncWebServer(PORT);                
+        AsyncWebServer server = AsyncWebServer(PORT);
+        SparkSensorController* sparkController;
 
         void connectToWifi()
           {
@@ -59,30 +61,79 @@
             Serial.printf("Running on -> http://%s:%d\r\n", WiFi.localIP().toString().c_str(), PORT);
           }
 
+        void sendConfigJsonAPI(AsyncWebServerRequest *request)
+          {
+            char buffer[500];
+            const char jsonTemplate[] = "{\"indoor\": %d, \"noiseLevel\": %d, \"showDisturber\": %d, \"watchdogThreshold\": %d, \"spike\": %d, \"lightningsCount\": %d}";
+
+            SparkConfig* config = sparkController->getConfig();
+            sprintf(buffer, jsonTemplate,
+                  config->indoor,
+                  config->noiseLevel,
+                  config->showDisturber,
+                  config->watchdogThreshold,
+                  config->spike,
+                  config->lightningsCount
+                );
+
+            request->send(200, "application/json", buffer);
+         };
+
+      void handleAnyRequest(AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) 
+        {
+          if(request->url() == "/api/options" && request->method() == HTTP_POST)
+            {
+              StaticJsonDocument<500> jsonBuffer;
+              DeserializationError error = deserializeJson(jsonBuffer, (const char*)data);
+              if(!error && sparkController->updateConfig(jsonBuffer))
+                return request->send(200);                  
+            };
+
+          request->send(400);
+        };
+
         void addServerHandlers()
           {
             server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-              if(!request->authenticate(PAGE_USERNAME, PAGE_PASSWORD))
-                return request->requestAuthentication();
+              // if(!request->authenticate(PAGE_USERNAME, PAGE_PASSWORD))
+                // return request->requestAuthentication();
               request->send(SPIFFS, "/index.html", "", false, templateProcessor);
             });
 
             server.on("/logout", HTTP_GET, [](AsyncWebServerRequest *request) {
-              request->send(401, "text/html", "<script>location.replace(\"/\");</script>");              
+              request->send(401, "text/html", "<script>location.replace(\"/\");</script>");
             });
+
+            server.on("/api/options", HTTP_GET, std::bind(&WebsocketAPIServer::sendConfigJsonAPI, this, std::placeholders::_1));
 
             server.onNotFound([](AsyncWebServerRequest *request) {
               request->send(404, "text/html", "<script>location.replace(\"/\");</script>");
             });
 
             server.serveStatic("/static/", SPIFFS, "/static/");
+            
+            server.onRequestBody(std::bind(
+              &WebsocketAPIServer::handleAnyRequest, 
+              this, 
+              std::placeholders::_1, 
+              std::placeholders::_2,
+              std::placeholders::_3,
+              std::placeholders::_4,
+              std::placeholders::_5
+            ));
+
+            // ws.setAuthentication(PAGE_USERNAME, PAGE_PASSWORD);
             ws.onEvent(WebsocketAPIServer::onWsEventUpdate);
-            ws.setAuthentication(PAGE_USERNAME, PAGE_PASSWORD);
+
             server.addHandler(&ws);
           };
-                
+
       public:
-        WebsocketAPIServer() {};
+        WebsocketAPIServer(SparkSensorController& sparkController)
+          {
+            this->sparkController = &sparkController;
+          };
+
         ~WebsocketAPIServer() {};
 
         void run()
@@ -99,6 +150,6 @@
             char buffer[500];
             serializeJson(doc, buffer);
             ws.textAll(buffer);
-          };  
+          };
     };
 #endif
