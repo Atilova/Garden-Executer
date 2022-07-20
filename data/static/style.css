@@ -6,6 +6,7 @@
 
 html, body {
   height: 100%;
+  --content-limit: 1300px;
 }
 
 body {
@@ -43,51 +44,157 @@ body {
 }
 
 .wrapper {
-  max-width: 1440px;
+  max-width: var(--content-limit);
   width: 100%;
-  padding: 25px 20px;
+  padding: 85px 20px 15px 20px;
 }
 
-.content {
-
+.page-header {
+  height: 40px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #343434;
+  width: 100%;
 }
 
-.spark-state__title {
-
+.page-header__limit {
+  max-width: calc(var(--content-limit));
+  display: flex;
+  height: 100%;
+  align-items: center;
+  margin: auto;
+  padding: 0px 20px;
 }
 
-.spark-state__info {
-  font-size: 20pt;
-  font-weight: 700;
-  color: green;
+.page-header__logo {  
+  color: #e9d8ff;
+  font-size: 14pt;
 }
+
+.page__header-logout {
+  margin: 0px 0px 0px auto;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: .3s;
+  text-decoration: none;
+}
+
+.page__header-logout:hover {
+  color: #a958ff;
+}
+
+
+
+.spark-sensor {
+  display: flex;
+}
+
+.weather {
+  display: flex;
+  flex-direction: column;
+  /* min-width: 270px; */
+  /* max-width: 320px; */
+  width: 100%;
+  margin-top: 50px;
+  --option-color: #2196f3;
+}
+
+.weather__title {
+  margin-bottom: 13px !important;
+}
+
+.weather-list__parameter {
+  padding: 9px 15px;
+}
+
+.weather__option-name {
+  margin-right: 3px;
+  color: var(--option-color);
+}
+
+.weather__option-value {
+  --modifier-color: #bbbbbb;
+  background-color:  #5b225c;
+  padding: 3px 10px;
+  color: white;
+  border-radius: 4px;
+  font-family: cursive;
+  margin-left: auto;
+  word-break: keep-all;
+}
+
+.weather_modifier {
+  color: var(--modifier-color);
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+.weather-list__parameter_temperature .weather__option-value span::after {
+  --size: 7px;
+  content: "";
+  display: inline-block;
+  width: var(--size);
+  height: var(--size);
+  margin: 0px 0px 8px 4px;
+  border-radius: 50%;
+  border: 2px solid var(--modifier-color);
+}
+
+.weather-list i {
+  min-width: 25px;
+  font-size: 13pt;
+  color: var(--option-color)
+}
+
 
 .spark-options {
-  max-width: 450px;
+  max-width: 400px;
+  min-width: 340px;
+  width: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
+  margin-left: auto;
+}
+
+.spark-options__header {
+  display: flex;
+  justify-content: end;
+  margin-bottom: 5px;
+}
+
+.spark-options__title,
+.weather__title {
+  margin: 0px auto 0px 0px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16pt;
+  font-weight: 600;
+  color: #e9d8ff;
+  margin-left: 10px;
+}
+
+.spark-options__title i,
+.weather__title i {
+  margin-right: 5px;
 }
 
 .spark-options__editor {
-  display: flex;  
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.spark-options__editor span {
-  margin: 0px auto 0px 0px;
-  font-size: 16pt;
-  font-weight: 600;
-  color: #ebebeb;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  height: 41px;
+  overflow: hidden;
 }
 
 .spark-options__menu {
-  display: none;
-}
-
-.spark-options__menu_active {
   display: flex;
+  margin: 4px 0px;
+  transition: .2s;
 }
 
 .spark-options__menu button {
@@ -101,9 +208,13 @@ body {
   border-top: var(--border);
   border-bottom: var(--border);
   border-left: var(--border);
-  font-size: 9pt;
   background-color: #4c4c4c;
   color: #ebebeb;
+  transition: .15s;
+}
+
+#config-exit i {
+  font-size: 10pt;
 }
 
 .spark-options__menu button:first-of-type {
@@ -115,7 +226,22 @@ body {
   border-radius: 0px 4px 4px 0px;
 }
 
-.spark-options__list {
+.spark-options__menu button:hover {
+  filter: brightness(1.2);
+}
+
+.spark-options__menu span {
+  font-size: 9pt;
+  display: inline-block;
+  transition: .15s;
+}
+
+.spark-options__menu_next {
+  transform: translateY(-124%);
+}
+
+.spark-options__list,
+.weather-list {
   --border: 1px solid #474747;
   --border-radius: 4px;
   list-style: none;
@@ -153,32 +279,46 @@ body {
     }
   }
 
-.spark-options__setting {
+.spark-options__setting,
+.weather-list__parameter {
   display: flex;
   border-top: var(--border);
   border-left: var(--border);
   border-right: var(--border);
-  padding: 9px 15px;
   align-items: center;
-  min-height: 50px;
 }
 
-.spark-options__setting:first-of-type {
+.spark-options__setting {
+  min-height: 52px;
+  padding: 9px 15px;
+}
+
+.spark-options__setting:first-of-type,
+.weather-list__parameter:first-of-type {
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
 }
 
-.spark-options__setting:last-of-type {
+.spark-options__setting:last-of-type,
+.weather-list__parameter:last-of-type {
   border-bottom: var(--border);
   border-bottom-left-radius: var(--border-radius);
   border-bottom-right-radius: var(--border-radius);
 }
 
-.spark-options__setting span {
-  width: 100%;
+.spark-options__setting span,
+.weather__option-name {
   font-weight: 500;
   font-size: 13pt;
+}
+
+.spark-options__setting span {
   color: #4caf50;
+}
+
+
+.spark-options__setting span {
+  width: 100%;
 }
 
 .spark-options__setting select {
@@ -196,6 +336,16 @@ body {
   position: relative;
   opacity: 1;
   transform: scale(1);
+  text-align: center;
+}
+
+.spark-options__setting select:disabled {
+  -webkit-appearance: none;
+  padding-right: 10px;
+  padding: 0;
+  text-align: end;
+  border: none;
+  cursor: default;
 }
 
 .spark-options__setting_loading select {
@@ -203,9 +353,24 @@ body {
   opacity: 0;
 }
 
+.spark-options__setting i {
+  transform: scale(0.9);
+  opacity: 0;
+  color: orangered;
+  font-size: 15pt;
+  transition: all .3s;
+  margin-right: 4.5px
+}
+
+.spark-options__setting_failed i {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .spark-options__setting option {
   background-color: #2d2d2d;
   color: #ff8800;
+  min-width: 20px;
 }
 
 .spark-options__setting option:hover {

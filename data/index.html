@@ -5,50 +5,82 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
-    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAADw8PAA7k8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAARERIiIQAAACIiIiIiEAAAAiIiIiIhAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAP/wAAB/8AAIP/AADB/wAA4P8AAPB/AAD4PwAA/B8AAMAPAADABwAA4AMAAPB/AAD4PwAA/B8AAP4PAAD/BwAA" rel="icon" type="image/x-icon" />
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAADw8PAA7k8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAARERIiIQAAACIiIiIiEAAAAiIiIiIhAAAAIiIQAAAAAAACIiEAAAAAAAAiIhAAAAAAAAIiIQAAAAAAACIiEAAP/wAAB/8AAIP/AADB/wAA4P8AAPB/AAD4PwAA/B8AAMAPAADABwAA4AMAAPB/AAD4PwAA/B8AAP4PAAD/BwAA" />
     <link rel="stylesheet" href="static/style.css" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />
+    <script src="{% static 'dashboard/script.js' %}"></script>
   </head>
   <body>
+    <header class="page-header">
+      <div class="page-header__limit">
+        <span class="page-header__logo">
+          <i class="fa-solid fa-microchip"></i>
+          LightningMonitoring
+        </span>
+        
+        <a href="#" class="page__header-logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          Logout
+        </a>
+
+      </div>
+    </header>
+
     <main class="wrapper">
-      
-      <div class="content">
+      <section class="spark-sensor">
+        <!-- <section class="spark-state"> -->
+          <!-- <span class="spark-state__title">Состояние: </span>
+          <span class="spark-state__info" id="state">ничего не обнаружено</span> -->
+        <!-- </section> -->
 
-        <!-- <div class="spark-state">          
-          <span class="spark-state__title">Состояние: </span>
-          <span class="spark-state__info" id="state">ничего не обнаружено</span>
-        </div> -->
+        <section class="spark-options">
+          <div class="spark-options__header">
+            <span class="spark-options__title">
+              <i class="fa-solid fa-sliders"></i>
+              Settings
+            </span>
+            <div class="spark-options__editor">
+              <div class="spark-options__menu">
+                <button class="spark-options__refresh" id="config-refresh">
+                  <span>
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                    Refresh
+                  </span>
+                </button>
+                <button class="spark-options__edit" id="config-edit">
+                  <span>
+                    <i class="fa-solid fa-scissors"></i>
+                    Edit
+                  </span>
+                </button>
+              </div>
 
-        <div class="spark-options">
-          <div class="spark-options__editor">
-            <span>Configuration</span>
-            <div class="spark-options__menu spark-options__menu_active">
-              <button class="spark-options__refresh" id="config-cancel">
-                <i class="fa-solid fa-arrow-rotate-right"></i>
-                Refresh
-              </button>
-              <button class="spark-options__edit" id="config-edit">
-                <i class="fa-solid fa-scissors"></i>
-                Edit
-              </button>
-            </div>
-
-            <div class="spark-options__menu">
-              <button class="spark-options__apply" id="config-apply">
-                <i class="fa-solid fa-share"></i>
-                Apply
-              </button>
-              <button class="spark-options__cancel" id="config-cancel">
-                <i class="fa-solid fa-xmark"></i>
-                Cancel
-              </button>
+              <div class="spark-options__menu">
+                <button class="spark-options__refresh" id="config-refresh">
+                  <span>
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                    Refresh
+                  </span>
+                  <button class="spark-options__apply" id="config-apply">
+                    <span>
+                      <i class="fa-solid fa-share"></i>
+                      Apply
+                    </span>
+                  </button>
+                  <button class="spark-options__exit" id="config-exit">
+                    <span>
+                      <i class="fa-solid fa-xmark"></i>
+                      Exit
+                    </span>
+                  </button>
+              </div>
             </div>
           </div>
-          
           <ul class="spark-options__list">
             <li id="config-indoor" class="spark-options__setting spark-options__setting_loading">
               <span>Location</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="indoor">Indoor</option>
                 <option value="outdoor">Outdoor</option>
               </select>
@@ -58,9 +90,9 @@
             </li>
             <li id="config-noise" class="spark-options__setting spark-options__setting_loading">
               <span>Noise Level</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="0">0</option>
-                <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
@@ -74,7 +106,8 @@
             </li>
             <li id="config-disturber" class="spark-options__setting spark-options__setting_loading">
               <span>Show Disturber</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="on">On</option>
                 <option value="off">Off</option>
               </select>
@@ -84,7 +117,8 @@
             </li>
             <li id="config-threshold" class="spark-options__setting spark-options__setting_loading">
               <span>Watchdog Threshold</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
@@ -102,7 +136,8 @@
             </li>
             <li id="config-spike" class="spark-options__setting spark-options__setting_loading">
               <span>Spike</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
@@ -121,7 +156,8 @@
             </li>
             <li id="config-lightnings" class="spark-options__setting spark-options__setting_loading">
               <span>Lightnings Count</span>
-              <select>
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <select disabled="disabled">
                 <option value="1">1</option>
                 <option value="5">5</option>
                 <option value="9">9</option>
@@ -131,9 +167,45 @@
                 <div class="spark-options__loader-animation"></div>
               </div>
             </li>
-          </ul>                    
-        </div>
+          </ul>
+
+          <section class="weather">
+            <span class="weather__title">
+              <i class="fa-solid fa-cloud"></i>
+              Weather
+            </span>
+            <ul class="weather-list">
+              <li class="weather-list__parameter weather-list__parameter_temperature">
+                <i class="fa-solid fa-temperature-low"></i>
+                <span class="weather__option-name">Temperature</span>
+                <span class="weather__option-value">
+                  <span>23</span>
+                </span>
+              </li>
+  
+              <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
+                <i class="fa-solid fa-droplet"></i>
+                <span class="weather__option-name">Humidity </span>
+                <span class="weather__option-value">
+                  <span>78</span>
+                  <small class="weather_modifier">&#37;</small>
+                </span>
+              </li>
+  
+              <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
+                <i class="fa-solid fa-chart-area"></i>
+                <span class="weather__option-name">Pressure </span>
+                <span class="weather__option-value">
+                  <span>746</span>
+                  <small class="weather_modifier">mmHg</small>
+                </span>
+              </li>
+            </ul>
+          </section>
+        </section>
       </div>
+
+
     </main>
 
     <script src="static/script.js"></script>
