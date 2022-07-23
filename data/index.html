@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Lightning</title>
-    <meta charset="UTF-8" />
+    <title>Lightning Monitor</title>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
     <link rel="icon" type="image/x-icon" href="https://iconarchive.com/download/i103437/paomedia/small-n-flat/lightning.ico" />
     <link rel="stylesheet" href="static/style.css" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />
-    <script src="{% static 'dashboard/script.js' %}"></script>
   </head>
   <body>
     <header class="page-header">
@@ -17,21 +16,66 @@
           <i class="fa-solid fa-microchip"></i>
           LightningMonitoring
         </span>
-        
+        <div class="page__header-socket">
+          <i class="fa-solid fa-plug"></i>
+          <span></span>
+        </div>
         <a href="#" class="page__header-logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           Logout
         </a>
-
       </div>
     </header>
-
+    
+    <img class="lightning-animation" src="img/lightning.png" />
     <main class="wrapper">
       <section class="spark-sensor">
-        <!-- <section class="spark-state"> -->
-          <!-- <span class="spark-state__title">Состояние: </span>
-          <span class="spark-state__info" id="state">ничего не обнаружено</span> -->
-        <!-- </section> -->
+        <section class="spark-state">
+          <span class="spark-state__title">
+            <i class="fa-solid fa-bolt-lightning"></i>
+            Last Lightning
+          </span>
+          <ul class="spark-state__list">
+            <li class="spark-state__info spark-state__info_time">
+              <span class="spark-state__info-name">
+                <i class="fa-solid fa-clock"></i>
+                Time
+              </span>
+              <span id="lightning-time" class="spark-state__value">null</span>
+            </li>
+            <li class="spark-state__info spark-state__info_distance">
+              <span class="spark-state__info-name">
+                <i class="fa-solid fa-location-dot"></i>
+                Distance
+              </span>
+              <span id="lightning-distance" class="spark-state__value">null</span>
+            </li>
+            <li class="spark-state__info spark-state__info_energy">
+              <span class="spark-state__info-name">
+                <i class="fa-solid fa-lightbulb"></i>
+                Energy
+              </span>
+              <span id="lightning-energy" class="spark-state__value">null</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="spark-locator">
+          <span class="spark-locator__title">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Current Search
+          </span>
+
+          <ul class="spark-locator__list">
+            <li class="spark-locator__info spark-state__info_locator">
+              <span class="spark-state__info-name">                
+                <i class="fa-solid fa-tower-broadcast"></i>
+                Locator
+              </span>
+              <span class="spark-locator__message spark-state__message_null" id="state">null</span>
+            </li>
+          </ul>
+        </section>
 
         <section class="spark-options">
           <div class="spark-options__header">
@@ -54,7 +98,6 @@
                   </span>
                 </button>
               </div>
-
               <div class="spark-options__menu">
                 <button class="spark-options__refresh" id="config-refresh">
                   <span>
@@ -93,6 +136,7 @@
               <i class="fa-solid fa-triangle-exclamation"></i>
               <select disabled="disabled">
                 <option value="0">0</option>
+                <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
@@ -167,45 +211,41 @@
                 <div class="spark-options__loader-animation"></div>
               </div>
             </li>
-          </ul>
-
-          <section class="weather">
-            <span class="weather__title">
-              <i class="fa-solid fa-cloud"></i>
-              Weather
-            </span>
-            <ul class="weather-list">
-              <li class="weather-list__parameter weather-list__parameter_temperature">
-                <i class="fa-solid fa-temperature-low"></i>
-                <span class="weather__option-name">Temperature</span>
-                <span class="weather__option-value">
-                  <span>23</span>
-                </span>
-              </li>
-  
-              <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
-                <i class="fa-solid fa-droplet"></i>
-                <span class="weather__option-name">Humidity </span>
-                <span class="weather__option-value">
-                  <span>78</span>
-                  <small class="weather_modifier">&#37;</small>
-                </span>
-              </li>
-  
-              <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
-                <i class="fa-solid fa-chart-area"></i>
-                <span class="weather__option-name">Pressure </span>
-                <span class="weather__option-value">
-                  <span>746</span>
-                  <small class="weather_modifier">mmHg</small>
-                </span>
-              </li>
-            </ul>
-          </section>
+          </ul>          
         </section>
-      </div>
 
-
+        <section class="weather">
+          <span class="weather__title">
+            <i class="fa-solid fa-cloud"></i>
+            Weather
+          </span>
+          <ul class="weather-list">
+            <li class="weather-list__parameter weather-list__parameter_temperature">
+              <i class="fa-solid fa-temperature-low"></i>
+              <span class="weather__option-name">Temperature</span>
+              <span class="weather__option-value">
+                <span>null</span>
+              </span>
+            </li>
+            <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
+              <i class="fa-solid fa-droplet"></i>
+              <span class="weather__option-name">Humidity </span>
+              <span class="weather__option-value">
+                <span>null</span>
+                <small class="weather_modifier">&#37;</small>
+              </span>
+            </li>
+            <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
+              <i class="fa-solid fa-chart-area"></i>
+              <span class="weather__option-name">Pressure </span>
+              <span class="weather__option-value">
+                <span>null</span>
+                <small class="weather_modifier">mmHg</small>
+              </span>
+            </li>
+          </ul>
+        </section>
+      </section>
     </main>
 
     <script src="static/script.js"></script>

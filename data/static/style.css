@@ -6,17 +6,21 @@
 
 html, body {
   height: 100%;
-  --content-limit: 1300px;
+  --content-limit: 1150px;
 }
 
 body {
+  --body-color: #2d2d2d;
+
   display: flex;
   justify-content: center;
   width: 100%;
   font-family: "Roboto";
-  background-color: #2d2d2d;
 
-  --theme-blue-100: #2f8fd7;
+  background-color: var(--body-color);
+  /* background-color: #2d2d2d; */
+
+  /* --theme-blue-100: #2f8fd7;
   --theme-blue-200: #03a9f4;
 
   --theme-black-100: #2d2d2d;
@@ -39,15 +43,9 @@ body {
   --theme-orange-100: #5e4633;
   --theme-orange-200: #94531e;
   --theme-orange-300: #f48225;
-  --theme-orange-700: #ffc107;
-
+  --theme-orange-700: #ffc107; */
 }
 
-.wrapper {
-  max-width: var(--content-limit);
-  width: 100%;
-  padding: 85px 20px 15px 20px;
-}
 
 .page-header {
   height: 40px;
@@ -57,6 +55,7 @@ body {
   left: 0;
   background-color: #343434;
   width: 100%;
+  z-index: 2;
 }
 
 .page-header__limit {
@@ -68,9 +67,30 @@ body {
   padding: 0px 20px;
 }
 
-.page-header__logo {  
+.page-header__logo {
   color: #e9d8ff;
   font-size: 14pt;
+  margin-right: 70px;
+}
+
+.page__header-socket {
+  font-size: 11pt;
+  color: #ffc107;
+  transition: .2s;
+}
+
+.page__header-socket span::after {
+  content: "Connecting...";
+  display: inline-block;
+  font-weight: 500;
+}
+
+.page__header-socket_online span::after {
+  content: "Online";
+}
+
+.page__header-socket_online {
+  color: #8bc34a;
 }
 
 .page__header-logout {
@@ -82,27 +102,147 @@ body {
   text-decoration: none;
 }
 
-.page__header-logout:hover {
-  color: #a958ff;
+.wrapper {
+  max-width: var(--content-limit);
+  width: 100%;
+  padding: 85px 20px 15px 20px;
+  position: relative;
+  z-index: 1;
 }
 
+.lightning-animation {
+  margin-left: 50%;
+  transform: translateX(-66%);
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 0;
+  opacity: 0;
+}
 
+.lightning-animation_strike {
+  opacity: 1;
+}
+
+@keyframes tester {
+  0% {
+    transform: scale(0.5);
+  }
+  99% {
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+  }
+}
 
 .spark-sensor {
+  display: grid;
+  grid-template-columns: [col1-start] auto [col2-start] 430px [col2-end];
+  grid-template-rows: [row1-start] auto [row2-start] auto [row2-end];
+}
+
+.spark-options,
+.spark-state,
+.weather {
+  min-width: 320px;
+}
+
+.spark-state {
   display: flex;
+  flex-direction: column;
+  max-width: 450px;
+  width: 100%;
+  height: 100%;
+  margin-top: 7.5px;
+  grid-column: col1-start / col2-start;
+  grid-row: row1-start / row2-end;
+  margin-top: 10%;
+  height: fit-content;
+}
+
+.spark-state__info {
+  font-size: 14pt;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  min-height: 70px;
+}
+
+.spark-state__info-name {
+  font-weight: 600;
+}
+
+.spark-state__message,
+.spark-state__value {
+  font-family: cursive;
+  margin-left: auto;
+}
+
+.spark-state__message,
+.spark-state__value {
+  color: white;
+  padding: 7px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: .2s;
+}
+
+.spark-state__message_null {
+  background-color: #80a159;
+}
+
+.spark-state__message_disturber {
+  background-color: #8864c7;
+}
+
+.spark-state__message_noise {
+  background-color: #8f449c;
+}
+
+.spark-state__message_untracked {
+  background-color: #4a7597;
+}
+
+.spark-state__value::after {
+  display: inline-block;
+  font-size: 11pt;
+  color: #cfcfcf;
+  margin-left: 3px;
+}
+
+.spark-state__info_distance .spark-state__value::after {
+  content: "km";
+}
+
+.spark-state__info_energy .spark-state__value::after {
+  content: "meV";
+}
+
+.spark-state__info-name {
+  color: #f37b26;
+}
+
+.spark-state__info-name i {
+  min-width: 23px;
+}
+
+.spark-state__value {
+  background-color: #5d4170;
 }
 
 .weather {
+  --option-color: #2196f3;
   display: flex;
   flex-direction: column;
-  /* min-width: 270px; */
-  /* max-width: 320px; */
   width: 100%;
   margin-top: 50px;
-  --option-color: #2196f3;
+  grid-column: col2-start / col2-end;
+  grid-row: row2-start;
 }
 
-.weather__title {
+.weather__title,
+.spark-state__title {
   margin-bottom: 13px !important;
 }
 
@@ -123,7 +263,7 @@ body {
   border-radius: 4px;
   font-family: cursive;
   margin-left: auto;
-  word-break: keep-all;
+  /* word-break: keep-all; */
 }
 
 .weather_modifier {
@@ -149,15 +289,14 @@ body {
   color: var(--option-color)
 }
 
-
 .spark-options {
-  max-width: 400px;
-  min-width: 340px;
   width: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
   margin-left: auto;
+  grid-column: col2-start / col2-end;
+  grid-row: row1-start;
 }
 
 .spark-options__header {
@@ -167,7 +306,9 @@ body {
 }
 
 .spark-options__title,
-.weather__title {
+.weather__title,
+.spark-state__title,
+.spark-locator__title {
   margin: 0px auto 0px 0px;
   display: flex;
   justify-content: center;
@@ -179,7 +320,9 @@ body {
 }
 
 .spark-options__title i,
-.weather__title i {
+.weather__title i,
+.spark-state__title i
+.spark-locator__title i {
   margin-right: 5px;
 }
 
@@ -226,10 +369,6 @@ body {
   border-radius: 0px 4px 4px 0px;
 }
 
-.spark-options__menu button:hover {
-  filter: brightness(1.2);
-}
-
 .spark-options__menu span {
   font-size: 9pt;
   display: inline-block;
@@ -241,7 +380,8 @@ body {
 }
 
 .spark-options__list,
-.weather-list {
+.weather-list,
+.spark-state__list {
   --border: 1px solid #474747;
   --border-radius: 4px;
   list-style: none;
@@ -280,7 +420,8 @@ body {
   }
 
 .spark-options__setting,
-.weather-list__parameter {
+.weather-list__parameter,
+.spark-state__info {
   display: flex;
   border-top: var(--border);
   border-left: var(--border);
@@ -294,13 +435,15 @@ body {
 }
 
 .spark-options__setting:first-of-type,
-.weather-list__parameter:first-of-type {
+.weather-list__parameter:first-of-type,
+.spark-state__info:first-of-type {
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
 }
 
 .spark-options__setting:last-of-type,
-.weather-list__parameter:last-of-type {
+.weather-list__parameter:last-of-type,
+.spark-state__info:last-of-type {
   border-bottom: var(--border);
   border-bottom-left-radius: var(--border-radius);
   border-bottom-right-radius: var(--border-radius);
@@ -314,10 +457,6 @@ body {
 
 .spark-options__setting span {
   color: #4caf50;
-}
-
-
-.spark-options__setting span {
   width: 100%;
 }
 
@@ -373,6 +512,100 @@ body {
   min-width: 20px;
 }
 
-.spark-options__setting option:hover {
-  background-color: yellow !important;
+
+@media (pointer: fine) {
+  .page__header-logout:hover {
+    color: #a958ff;
+  }
+
+  .spark-options__menu button:hover {
+    filter: brightness(1.2);
+  }
+}
+
+.lightning-animation {
+  /* opacity: 1 !important; */
+}
+
+@media screen and (max-width: 1640px) {
+  .lightning-animation {
+    transform: translateX(-60%);
+  }
+}
+
+@media screen and (max-width: 1500px) {
+  .lightning-animation {
+    transform: translateX(-55%);
+  }
+}
+
+@media screen and (max-width: 1380px) {
+  .lightning-animation {
+    transform: translateX(-52%);
+  }
+}
+
+@media screen and (max-width: 1300px) {
+  .lightning-animation {
+    transform: translateX(-50%);
+  }
+}
+
+@media screen and (max-width: 975px) {
+  .wrapper {
+    padding: 80px 20px 15px 20px;
+  }
+
+  .spark-sensor {
+    grid-template-columns: [col1-start] auto [col2-start];
+    grid-template-rows: [row1-start] auto [row2-start] auto [row3-start] auto [row3-end];
+    grid-gap: 28px;
+  }
+
+  .spark-options {
+    grid-column: col1-start;
+    grid-row: row2-start / row3-start;
+  }
+
+  .spark-state {
+    grid-column: col1-start;
+    grid-row: row1-start / row2-start;
+    max-width: none;
+    margin-top: 0;
+  }
+  
+  .weather {
+    grid-column: col1-start;
+    grid-row: row3-start / row3-end;
+    margin-top: 0;
+  }
+
+  .lightning-animation {
+    transform: translateX(-44%) scale(0.85);    
+  }
+}
+
+/* @media screen and (max-width: 600px) {
+  .lightning-animation {
+    transform: translateX(-37%) scale(0.9);
+  }
+} */
+
+@media screen and (max-width: 500px) {
+  .lightning-animation {
+    transform: translateX(-42%) scale(0.8);
+  }
+  .page-header {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .wrapper {
+    padding: 80px 8px 10px 8px;
+  }
+
+  .lightning-animation {
+    /* transform: translateX(-37%) scale(0.7); */
+  }
 }
