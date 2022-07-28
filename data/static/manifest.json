@@ -1,0 +1,28 @@
+{
+  "name": "Lightning Monitoring",
+  "short_name": "Lightning",
+  "start_url": "/",
+  "display": "standalone",
+  "description": "Application to track lightnings",
+  "lang": "en-US",
+  "theme_color": "black",
+  "background_color": "#2d2d2d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "static/img/logo/app-icon-144x144.jpg",
+      "sizes": "144x144",
+      "type": "image/jpg"
+    },
+    {
+      "src": "static/logo/app-icon-256x256.jpg",
+      "sizes": "256x256",
+      "type": "image/jpg"
+    },
+    {
+      "src": "static/logo/app-icon-512x512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpg"
+    }
+  ]
+}

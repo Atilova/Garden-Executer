@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
     <link rel="icon" type="image/x-icon" href="https://iconarchive.com/download/i103437/paomedia/small-n-flat/lightning.ico" />
     <link rel="stylesheet" href="static/style.css" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />    
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,regular,500,600,700,800,900,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic" rel="stylesheet" />
+    <link rel="apple-touch-icon" size="512x512" href="static/img/logo/app-icon-512x512.jpg" />
+    <link rel="apple-touch-icon" size="144x144" href="static/img/logo/app-icon-144x144.jpg" />
+    <link rel="apple-touch-icon" size="256x256" href="static/img/logo/app-icon-256x256.jpg" />    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="static/manifest.json">
   </head>
   <body>
     <header class="page-header">
@@ -16,237 +22,257 @@
           <i class="fa-solid fa-microchip"></i>
           LightningMonitoring
         </span>
-        <div class="page__header-socket">
+        <div class="page-header__socket">
           <i class="fa-solid fa-plug"></i>
           <span></span>
         </div>
-        <a href="#" class="page__header-logout">
+        <a href="#" class="page-header__logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           Logout
         </a>
       </div>
     </header>
     
-    <img class="lightning-animation" src="img/lightning.png" />
+    <img class="lightning-animation" src="static/img/lightning.png" />
     <main class="wrapper">
-      <section class="spark-sensor">
-        <section class="spark-state">
-          <span class="spark-state__title">
-            <i class="fa-solid fa-bolt-lightning"></i>
-            Last Lightning
-          </span>
-          <ul class="spark-state__list">
-            <li class="spark-state__info spark-state__info_time">
-              <span class="spark-state__info-name">
-                <i class="fa-solid fa-clock"></i>
-                Time
+      <div class="container">
+        <div class="content">
+          <section class="spark-sensor">
+            <section class="spark-statistics">
+              
+            </section>
+    
+            <section class="spark-state">
+              <span class="spark-state__title">
+                <i class="fa-solid fa-bolt-lightning"></i>
+                Last Lightning
               </span>
-              <span id="lightning-time" class="spark-state__value">null</span>
-            </li>
-            <li class="spark-state__info spark-state__info_distance">
-              <span class="spark-state__info-name">
-                <i class="fa-solid fa-location-dot"></i>
-                Distance
-              </span>
-              <span id="lightning-distance" class="spark-state__value">null</span>
-            </li>
-            <li class="spark-state__info spark-state__info_energy">
-              <span class="spark-state__info-name">
-                <i class="fa-solid fa-lightbulb"></i>
-                Energy
-              </span>
-              <span id="lightning-energy" class="spark-state__value">null</span>
-            </li>
-          </ul>
-        </section>
-
-        <section class="spark-locator">
-          <span class="spark-locator__title">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            Current Search
-          </span>
-
-          <ul class="spark-locator__list">
-            <li class="spark-locator__info spark-state__info_locator">
-              <span class="spark-state__info-name">                
-                <i class="fa-solid fa-tower-broadcast"></i>
-                Locator
-              </span>
-              <span class="spark-locator__message spark-state__message_null" id="state">null</span>
-            </li>
-          </ul>
-        </section>
-
-        <section class="spark-options">
-          <div class="spark-options__header">
-            <span class="spark-options__title">
-              <i class="fa-solid fa-sliders"></i>
-              Settings
-            </span>
-            <div class="spark-options__editor">
-              <div class="spark-options__menu">
-                <button class="spark-options__refresh" id="config-refresh">
-                  <span>
-                    <i class="fa-solid fa-arrow-rotate-right"></i>
-                    Refresh
+              <ul class="spark-state__list">
+                <li class="spark-state__info spark-state__info_time">
+                  <span class="spark-state__info-name">
+                    <i class="fa-solid fa-clock"></i>
+                    Time
                   </span>
-                </button>
-                <button class="spark-options__edit" id="config-edit">
-                  <span>
-                    <i class="fa-solid fa-scissors"></i>
-                    Edit
+                  <span id="lightning-time" class="spark-state__value">null</span>
+                </li>
+                <li class="spark-state__info spark-state__info_distance">
+                  <span class="spark-state__info-name">
+                    <i class="fa-solid fa-location-dot"></i>
+                    Distance
                   </span>
-                </button>
-              </div>
-              <div class="spark-options__menu">
-                <button class="spark-options__refresh" id="config-refresh">
-                  <span>
-                    <i class="fa-solid fa-arrow-rotate-right"></i>
-                    Refresh
+                  <span id="lightning-distance" class="spark-state__value">null</span>
+                </li>
+                <li class="spark-state__info spark-state__info_energy">
+                  <span class="spark-state__info-name">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    Energy
                   </span>
-                  <button class="spark-options__apply" id="config-apply">
-                    <span>
-                      <i class="fa-solid fa-share"></i>
-                      Apply
-                    </span>
-                  </button>
-                  <button class="spark-options__exit" id="config-exit">
-                    <span>
-                      <i class="fa-solid fa-xmark"></i>
-                      Exit
-                    </span>
-                  </button>
-              </div>
-            </div>
-          </div>
-          <ul class="spark-options__list">
-            <li id="config-indoor" class="spark-options__setting spark-options__setting_loading">
-              <span>Location</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="indoor">Indoor</option>
-                <option value="outdoor">Outdoor</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-            <li id="config-noise" class="spark-options__setting spark-options__setting_loading">
-              <span>Noise Level</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-            <li id="config-disturber" class="spark-options__setting spark-options__setting_loading">
-              <span>Show Disturber</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="on">On</option>
-                <option value="off">Off</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-            <li id="config-threshold" class="spark-options__setting spark-options__setting_loading">
-              <span>Watchdog Threshold</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-            <li id="config-spike" class="spark-options__setting spark-options__setting_loading">
-              <span>Spike</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-            <li id="config-lightnings" class="spark-options__setting spark-options__setting_loading">
-              <span>Lightnings Count</span>
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <select disabled="disabled">
-                <option value="1">1</option>
-                <option value="5">5</option>
-                <option value="9">9</option>
-                <option value="16">16</option>
-              </select>
-              <div class="spark-options__loader">
-                <div class="spark-options__loader-animation"></div>
-              </div>
-            </li>
-          </ul>          
-        </section>
-
-        <section class="weather">
-          <span class="weather__title">
-            <i class="fa-solid fa-cloud"></i>
-            Weather
-          </span>
-          <ul class="weather-list">
-            <li class="weather-list__parameter weather-list__parameter_temperature">
-              <i class="fa-solid fa-temperature-low"></i>
-              <span class="weather__option-name">Temperature</span>
-              <span class="weather__option-value">
-                <span>null</span>
+                  <span id="lightning-energy" class="spark-state__value">null</span>
+                </li>
+              </ul>
+            </section>
+    
+            <section class="spark-locator">
+              <span class="spark-locator__title">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Search
               </span>
-            </li>
-            <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
-              <i class="fa-solid fa-droplet"></i>
-              <span class="weather__option-name">Humidity </span>
-              <span class="weather__option-value">
-                <span>null</span>
-                <small class="weather_modifier">&#37;</small>
+              <ul class="spark-locator__list">
+                <li class="spark-locator__info spark-state__info_locator">
+                  <span class="spark-locator__info-name">                
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    Locator
+                  </span>
+                  <span class="spark-locator__message spark-state__message_null" id="state">null</span>
+                </li>
+              </ul>
+            </section>
+    
+            <section class="spark-options">
+              <div class="spark-options__header">
+                <span class="spark-options__title">
+                  <i class="fa-solid fa-sliders"></i>
+                  Settings
+                </span>
+                <div class="spark-options__editor">
+                  <div class="spark-options__menu">
+                    <button class="spark-options__refresh" id="config-refresh">
+                      <span>
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                        Refresh
+                      </span>
+                    </button>
+                    <button class="spark-options__edit" id="config-edit">
+                      <span>
+                        <i class="fa-solid fa-scissors"></i>
+                        Edit
+                      </span>
+                    </button>
+                  </div>
+                  <div class="spark-options__menu">
+                    <button class="spark-options__refresh" id="config-refresh">
+                      <span>
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                        Refresh
+                      </span>
+                      <button class="spark-options__apply" id="config-apply">
+                        <span>
+                          <i class="fa-solid fa-share"></i>
+                          Apply
+                        </span>
+                      </button>
+                      <button class="spark-options__exit" id="config-exit">
+                        <span>
+                          <i class="fa-solid fa-xmark"></i>
+                          Exit
+                        </span>
+                      </button>
+                  </div>
+                </div>
+              </div>
+              <ul class="spark-options__list">
+                <li id="config-indoor" class="spark-options__setting spark-options__setting_loading">
+                  <span>Location</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="indoor">Indoor</option>
+                    <option value="outdoor">Outdoor</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+                <li id="config-noise" class="spark-options__setting spark-options__setting_loading">
+                  <span>Noise Level</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+                <li id="config-disturber" class="spark-options__setting spark-options__setting_loading">
+                  <span>Show Disturber</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="on">On</option>
+                    <option value="off">Off</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+                <li id="config-threshold" class="spark-options__setting spark-options__setting_loading">
+                  <span>Watchdog Threshold</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+                <li id="config-spike" class="spark-options__setting spark-options__setting_loading">
+                  <span>Spike</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+                <li id="config-lightnings" class="spark-options__setting spark-options__setting_loading">
+                  <span>Lightnings Count</span>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <select disabled="disabled">
+                    <option value="1">1</option>
+                    <option value="5">5</option>
+                    <option value="9">9</option>
+                    <option value="16">16</option>
+                  </select>
+                  <div class="spark-options__loader">
+                    <div class="spark-options__loader-animation"></div>
+                  </div>
+                </li>
+              </ul>          
+            </section>
+    
+            <section class="weather">
+              <span class="weather__title">
+                <i class="fa-solid fa-cloud"></i>
+                Weather
               </span>
-            </li>
-            <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
-              <i class="fa-solid fa-chart-area"></i>
-              <span class="weather__option-name">Pressure </span>
-              <span class="weather__option-value">
-                <span>null</span>
-                <small class="weather_modifier">mmHg</small>
-              </span>
-            </li>
-          </ul>
-        </section>
-      </section>
+              <ul class="weather-list">
+                <li class="weather-list__parameter weather-list__parameter_temperature">
+                  <i class="fa-solid fa-temperature-low"></i>
+                  <span class="weather__option-name">Temperature</span>
+                  <span class="weather__option-value">
+                    <span>null</span>
+                  </span>
+                </li>
+                <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
+                  <i class="fa-solid fa-droplet"></i>
+                  <span class="weather__option-name">Humidity </span>
+                  <span class="weather__option-value">
+                    <span>null</span>
+                    <small class="weather_modifier">&#37;</small>
+                  </span>
+                </li>
+                <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
+                  <i class="fa-solid fa-chart-area"></i>
+                  <span class="weather__option-name">Pressure </span>
+                  <span class="weather__option-value">
+                    <span>null</span>
+                    <small class="weather_modifier">mmHg</small>
+                  </span>
+                </li>
+              </ul>
+            </section>
+          </section>
+        </div>
+      </div>      
     </main>
+
+    <footer class="mobile-menu">
+      <i class="fa-solid fa-microchip mobile-menu__logo"></i>
+      <div class="mobile-menu__socket">
+        <i class="fa-solid fa-plug"></i>
+        <span></span>
+      </div>
+      <a href="#" class="mobile-menu__logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+      </a>
+    </div>
+    </footer>
 
     <script src="static/script.js"></script>
   </body>
