@@ -1,36 +1,72 @@
 #include <Arduino.h>
-#include <Server.h>
-#include <SparkFun_AS3935.h>
-#include <Wire.h>
 #include <EEPROM.h>
-#include <SPIFFS.h>
-#include <Lightning.h>
 
-#define SPARK_SENSOR_INTERRUPT_PIN 5
 #define SPARK_SENSOR_AS3935_ADDRESS 0x03
+#define EEPROM_CONFIG_ADDRESS 0x0
+#define BME280_WEATHER_SENSOR_ADDRESS 0x76
 
-StaticJsonDocument<500> doc;
+// #include <LightningMonitoring.h>
 
-SparkFun_AS3935 sparkSensor(SPARK_SENSOR_AS3935_ADDRESS);
-SparkSensorController smartSparkController(sparkSensor, 48, SPARK_SENSOR_INTERRUPT_PIN);
-WebsocketAPIServer wsServer(smartSparkController);
+// using namespace lightningMonitoring;
+
+// LightningMonitor wsServerMonitor(48, 18);
+
+
+#include <WiFi.h>
+#include <MySQL_Connection.h>
+#include <MySQL_Cursor.h>
+#include <Settings.h>
+
+
+ProjectConfig conf;
+WiFiClient espWifiClient;
+MySQL_Connection conn((Client*)&espWifiClient);
+
+char query[] = "SELECT content FROM temp";
+MySQL_Cursor cursor = MySQL_Cursor(&conn);
 
 
 void setup()
   {
     Serial.begin(115200);
     Serial.println();
-
-    Wire.begin();
     EEPROM.begin(512);
-    SPIFFS.begin();
 
-    smartSparkController.init();
+    WiFi.config(conf.WIFI_IP, conf.WIFI_GATEWAY, conf.WIFI_SUBNET_MASK, conf.WIFI_PRIMARY_DNS, conf.WIFI_SECONDARY_DNS);
+    WiFi.begin(conf.WIFI_SSID, conf.WIFI_PASSWORD);
 
-    wsServer.run();
+    while(!WiFi.isConnected()) {
+      Serial.println("ERROR");
+      delay(1000);
+    }
+
+    Serial.print("WiFI Connected -> ");
+    Serial.println(WiFi.localIP());
+
+    if(conn.connect(conf.DATABASE_HOST, conf.DATABASE_PORT, conf.DATABASE_USER, conf.DATABASE_PASSWORD, conf.DATABASE_NAME))
+      {
+        Serial.println("Done");
+        cursor.execute(query);
+        cursor.get_columns();
+
+        row_values* row = NULL;
+        do {
+          row = cursor.get_next_row();
+          if (row != NULL) {
+            Serial.println(row->values[0]);
+          }
+        } while (row != NULL);
+
+        cursor.close();
+        conn.close();
+      };
+
+
+    // wsServerMonitor.init();
+    // wsServerMonitor.run();
   };
 
 void loop()
- {
-  smartSparkController.loop();
- };
+  {
+    // wsServerMonitor.loop();
+  };
