@@ -1,0 +1,9 @@
+@media (pointer: fine) {
+  .page-header__logout-action:hover {
+    color: var(--theme-pink-700);
+  }
+
+  .dashboard-settings__control-button:hover {
+    filter: brightness(1.2);
+  }
+}

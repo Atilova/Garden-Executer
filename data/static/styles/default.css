@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic');
+@import url('https://fonts.googleapis.com/css?family=Nunito:200,300,regular,500,600,700,800,900,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic');
+@import url('lightning.css');
+@import url('media.css');
+
+*, *::before, *::after {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+:root {
+  --content-limit: 1150px;
+}
+
+body {
+
+  --theme-black-100: #474747;
+  --theme-black-200: #343434;
+  --theme-black-300: #2d2d2d;
+    
+  --theme-white-000: #ffffff;
+  --theme-white-200: #ececec;
+  --theme-white-400: #bbbbbb;
+  --theme-white-500: #cfcfcf80;
+
+  --theme-pink-100: #e0c7ff;
+  --theme-pink-300: #b792ff;
+  --theme-pink-350: #8d9eff;
+  --theme-pink-400: #4a7597;
+  --theme-pink-700: #a958ff;
+  --theme-pink-850: #673ab7;
+  --theme-pink-900: #8f449c;
+  --theme-pink-1000: #5b225c;
+
+  --theme-orange-200: #898136;
+  --theme-orange-500: #ffc107;
+  --theme-orange-700: #ff8800;  
+  --theme-orange-900: #e65605;
+
+  --theme-green-100: #8bc34a;
+  --theme-green-200: #57aa5a;
+  --theme-green-300: #428245;
+
+  --body-color: var(--theme-black-300);
+
+  font-family: 'Roboto', sans-serif;
+  color: var(--theme-white-000);
+  background-color: var(--body-color);
+}
+
+/* Content limiters */
+.page__wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  padding-top: 40px;
+}
+
+.page__container {
+  height: 100%;
+  overflow-y: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;  
+}
+
+.page__content {
+  max-width: var(--content-limit);
+  width: 100%;
+  height: fit-content;
+  padding: 35px 20px 15px 20px;  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Desktop bar-menu */
+.desktop-menu {
+  height: 40px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: var(--theme-black-200);
+  z-index: 99;
+}
+
+.desktop-menu__limiter {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  margin: 0px auto;
+  max-width: calc(var(--content-limit));
+  padding: 0px 20px;  
+}
+
+.desktop-menu__logo {
+  color: var(--theme-pink-100);
+  font-size: 14pt;
+}
+
+.desktop-menu__connection-state {
+  margin-left: 70px;
+  font-size: 10pt;
+  font-weight: 500;
+  color: var(--theme-orange-500);
+  transition: .2s;
+}
+
+.desktop-menu__connection-state_online {
+  color: var(--theme-green-100);
+}
+
+.desktop-menu__connection-action::after {
+  content: "Connecting...";
+  font-weight: 500;
+}
+
+.desktop-menu__connection-state_online .desktop-menu__connection-action::after {
+  content: "Online";
+}
+
+.page-header__logout-action {
+  margin-left: auto;
+  color: var(--theme-pink-100);
+  cursor: pointer;
+  font-weight: 500;
+  transition: .15s;
+  text-decoration: none;
+}

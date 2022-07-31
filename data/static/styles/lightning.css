@@ -1,0 +1,358 @@
+/* General dashboard styles */
+.spark-dashboard {
+  --block-border: 1px solid #474747;
+  --block-border-radius: 4px;
+  display: grid;
+  gap: 30px;
+  width: 100%;  
+  grid-template-columns: auto 440px;
+  grid-template-rows: 130px repeat(5, auto);
+
+  grid-template-areas: "statistics statistics"
+                       "status settings"
+                       "locator settings"
+                       "locator weather"
+                       ". weather";
+}
+
+.spark-dashboard__block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;  
+  min-width: 320px;
+}
+
+.spark-dashboard__header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0px 10px;
+  margin-bottom: 5px;
+}
+
+.spark-dashboard__legend {
+  font-size: 15pt;
+  font-weight: 600;
+  color: var(--theme-pink-300);
+}
+
+.spark-dashboard__control {
+  margin-left: auto;
+  height: 100%;
+}
+
+.spark-dashboard__list {
+  list-style: none;
+}
+
+.spark-dashboard__holder {
+  display: flex;
+  align-items: center;
+  border-top: var(--block-border);
+  border-left: var(--block-border);
+  border-right: var(--block-border);
+  padding: 9px 17px;
+  min-height: 51px;
+  font-weight: 500;
+  font-size: 13pt;
+
+  color: #6fb81b;
+  color: #3498ff;
+  color: #61a6c8;
+  color: var(--theme-pink-350);
+  /* color: rgb(236, 224, 255); */
+  color: white;
+}
+
+.spark-dashboard__holder:first-of-type {
+  border-radius: var(--block-border-radius) var(--block-border-radius) 0px 0px;
+}
+
+.spark-dashboard__holder:last-of-type {
+  border-bottom: var(--block-border);
+  border-radius: 0px 0px var(--block-border-radius) var(--block-border-radius);
+}
+
+.spark-dashboard__holder-container {
+  margin-left: auto;
+  --container-color: var(--theme-pink-1000);  
+}
+
+.spark-dashboard__holder-loader {
+  position: relative;
+  display: inline-block;
+  height: 18px;
+  width: 15px;  
+}
+
+.spark-dashboard__holder-loader div {
+  position: absolute;
+  width: 3px;
+  background-color: var(--modifier-color);
+  animation: spark-loader 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+  bottom: 0px;
+  border-radius: 1px;
+}
+.spark-dashboard__holder-loader div:nth-child(1) {
+  left: 0px;
+  animation-delay: -0.24s;
+}
+.spark-dashboard__holder-loader div:nth-child(2) {
+  left: 6px;
+  animation-delay: -0.12s;
+}
+.spark-dashboard__holder-loader div:nth-child(3) {
+  left: 12px;
+  animation-delay: 0;
+}
+
+@keyframes spark-loader {
+  0% {
+    height: 18px;
+  }
+  50%, 100% {
+    height: 7px;
+  }
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__holder-loader {
+  position: absolute;
+  width: 0px;
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__holder-loader div {
+  animation: none;
+}
+
+.spark-dashboard__holder-value {
+  --modifier-color: var(--theme-white-400);
+  background-color: var(--container-color);
+  font-family: "Nunito";
+  color: var(--modifier-color);
+  padding: 3px 10px;
+  border-radius: var(--block-border-radius);
+  font-weight: 600;
+}
+
+.spark-dashboard__holder-value::after {
+  content: "";
+  font-size: 10pt;
+  color: var(--modifier-color);
+  font-weight: 700;
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__holder-value {
+  color: var(--theme-white-000);
+}
+
+.spark-dashboard__holder-value::before {
+  content: "";
+  transform: scale(0.9);
+  transition: color .15s, transform .1s;
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__holder-value::before {
+  content: attr(data-value);
+  transform: scale(1);
+  display: inline-block;
+}
+
+.spark-dashboard__select {
+  position: absolute;
+  width: 0px;
+  font-family: "Nunito";
+  font-size: 13pt;
+  border: 1px solid var(--theme-black-100);
+  border-radius: var(--block-border-radius);
+  padding: 2px;
+  outline: none;
+  cursor: pointer;
+  text-align: center;
+  padding-left: 4px;
+  opacity: 0;
+  z-index: -1;
+  transform: scale(0.8);
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__select {
+  opacity: 1;
+  position: static;
+  z-index: 0;
+  transition: all .2s;
+  transform: scale(1);
+}
+
+.spark-dashboard__holder-container_loaded .spark-dashboard__select:disabled {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: end;
+  border: none;
+  cursor: default;
+  padding: 0px;
+}
+
+.spark-dashboard__select option {
+  min-width: 20px;
+}
+
+
+/* Chart Statistics */
+.dashboard-statistics {
+  /* display: none; */
+  grid-area: statistics;
+  width: 100%;
+  max-width: 100%;
+}
+
+.dashboard-statistics .spark-dashboard__content {
+  background-color: #ffffff08;
+  height: 100%;
+}
+
+
+/* Last Lightning Parameters */
+.dashboard-status {
+  /* display: none; */
+  grid-area: status;
+}
+
+.dashboard-status .spark-dashboard__holder-container {
+  --container-color: var(--theme-pink-850);
+}
+
+.dashboard-status__distance::after {
+  content: "km";
+}
+
+.dashboard-status__energy::after {
+  content: "meV";
+}
+
+
+/* Current Search block */
+.dashboard-locator {
+  /* display: none; */
+  grid-area: locator;
+}
+
+.dashboard-locator__search {
+  background-color: var(--theme-green-300);
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_null::before {
+  content: "Clean";
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_disturber {
+  background-color: var(--theme-pink-400);
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_disturber::before {
+  content: "Disturber";
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_noise {
+  background-color: var(--theme-pink-900);
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_noise::before {
+  content: "Noise";
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_untracked {
+  background-color: var(--theme-orange-200);
+}
+
+.spark-dashboard__holder-container_loaded .dashboard-locator__search_untracked::before {
+  content: "Untracked";
+}
+
+
+/* Sparkfun sensor config block */
+.dashboard-settings {
+  /* display: none; */
+  grid-area: settings;
+}
+
+.dashboard-settings .spark-dashboard__control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.dashboard-settings__menu {
+  display: flex;
+  transition: .2s;
+  margin: 4px 0px;
+}
+
+.dashboard-settings .spark-dashboard__control_next .dashboard-settings__menu {
+  transform: translateY(-125%);
+}
+
+.dashboard-settings__control-button {
+  --button-border: 1px solid var(--theme-white-500);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  border: none;
+  border-top: var(--button-border);
+  border-bottom: var(--button-border);
+  border-left: var(--button-border);
+  background-color: var(--theme-black-100);
+  color: var(--theme-white-200);
+  transition: .15s;
+  font-size: 9.5pt;
+}
+
+.dashboard-settings__control-button:first-of-type {
+  border-radius: var(--block-border-radius) 0px 0px var(--block-border-radius);
+}
+
+.dashboard-settings__control-button:last-of-type {
+  border-right: var(--button-border);
+  border-radius: 0px var(--block-border-radius) var(--block-border-radius) 0px;
+}
+
+.dashboard-settings .spark-dashboard__holder-loader div {
+  background-color: var(--theme-orange-700);
+}
+
+.dashboard-settings .spark-dashboard__select {
+  color: var(--theme-orange-700);
+  background-color: transparent;
+}
+
+.dashboard-settings .spark-dashboard__select option {
+  color: var(--theme-orange-700);
+  background-color: var(--theme-black-300);
+}
+
+
+/* BME280 weather sensor block */
+.dashboard-weather {
+  /* display: none; */
+  grid-area: weather;
+}
+
+.dashboard-weather__temperature::after {
+  --degree-size: 7px;
+  content: "";
+  display: inline-block;
+  width: var(--degree-size);
+  height: var(--degree-size);
+  margin: 0px 0px 8px 1px;
+  border-radius: 50%;
+  border: 2px solid var(--modifier-color);
+}
+
+.dashboard-weather__humidity::after {
+  content: "%";
+}
+
+.dashboard-weather__pressure::after {
+  content: "mmHg";
+}

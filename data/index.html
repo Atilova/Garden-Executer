@@ -1,279 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Lightning Monitor</title>
+    <title>Lightning Monitoring</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css" />
     <link rel="icon" type="image/x-icon" href="https://iconarchive.com/download/i103437/paomedia/small-n-flat/lightning.ico" />
-    <link rel="stylesheet" href="static/style.css" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic" rel="stylesheet" />    
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,regular,500,600,700,800,900,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic" rel="stylesheet" />
+    <link rel="stylesheet" href="static/styles/default.css" />
+    <link rel="manifest" href="static/manifest.json">
     <link rel="apple-touch-icon" size="512x512" href="static/img/logo/app-icon-512x512.jpg" />
     <link rel="apple-touch-icon" size="144x144" href="static/img/logo/app-icon-144x144.jpg" />
     <link rel="apple-touch-icon" size="256x256" href="static/img/logo/app-icon-256x256.jpg" />    
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="static/manifest.json">
   </head>
-  <body>
-    <header class="page-header">
-      <div class="page-header__limit">
-        <span class="page-header__logo">
-          <i class="fa-solid fa-microchip"></i>
+  <body class="page">
+    <header class="desktop-menu">
+      <div class="desktop-menu__limiter">
+        <span class="desktop-menu__logo">
+          <i class="fa-solid fa-microchip desktop-menu__icon"></i>
           LightningMonitoring
         </span>
-        <div class="page-header__socket">
-          <i class="fa-solid fa-plug"></i>
-          <span></span>
+        <div class="desktop-menu__connection-state">
+          <i class="fa-solid fa-plug desktop-menu__connection-icon"></i>
+          <span id="connection" class="desktop-menu__connection-action"></span>
         </div>
-        <a href="#" class="page-header__logout">
-          <i class="fa-solid fa-right-from-bracket"></i>
+        <a href="#" class="page-header__logout-action">
+          <i class="fa-solid fa-right-from-bracket page-header__logout-icon"></i>
           Logout
         </a>
       </div>
+      <!-- <button id="test">PLAY</button> -->
     </header>
-    
-    <img class="lightning-animation" src="static/img/lightning.png" />
-    <main class="wrapper">
-      <div class="container">
-        <div class="content">
-          <section class="spark-sensor">
-            <section class="spark-statistics">
-              
+
+    <!-- <img class="lightning-animation" src="static/img/lightning.png" />-->
+
+    <main class="page__wrapper">
+      <div class="page__container">
+        <div class="page__content">
+          <section class="spark-dashboard">
+            <section class="spark-dashboard__block dashboard-statistics">
+              <div class="spark-dashboard__header">
+                <span class="spark-dashboard__legend">
+                  <i class="fa-solid fa-chart-column spark-dashboard__legend-icon"></i>
+                  Statistics
+                </span>
+              </div>
+              <div class="spark-dashboard__content"></div>
             </section>
-    
-            <section class="spark-state">
-              <span class="spark-state__title">
-                <i class="fa-solid fa-bolt-lightning"></i>
-                Last Lightning
-              </span>
-              <ul class="spark-state__list">
-                <li class="spark-state__info spark-state__info_time">
-                  <span class="spark-state__info-name">
-                    <i class="fa-solid fa-clock"></i>
-                    Time
-                  </span>
-                  <span id="lightning-time" class="spark-state__value">null</span>
-                </li>
-                <li class="spark-state__info spark-state__info_distance">
-                  <span class="spark-state__info-name">
-                    <i class="fa-solid fa-location-dot"></i>
-                    Distance
-                  </span>
-                  <span id="lightning-distance" class="spark-state__value">null</span>
-                </li>
-                <li class="spark-state__info spark-state__info_energy">
-                  <span class="spark-state__info-name">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    Energy
-                  </span>
-                  <span id="lightning-energy" class="spark-state__value">null</span>
-                </li>
-              </ul>
+
+            <section class="spark-dashboard__block dashboard-status">
+              <div class="spark-dashboard__header">
+                <span class="spark-dashboard__legend">
+                  <i class="fa-solid fa-bolt-lightning spark-dashboard__legend-icon"></i>
+                  Last Lightning
+                </span>
+              </div>
+              <div class="spark-dashboard__content">
+                <ul class="spark-dashboard__list">
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-clock spark-dashboard__holder-icon"></i>
+                      Time
+                    </span>
+                    <div id="lightning-time" class="spark-dashboard__holder-container">
+                      <div data-value="12:34" class="spark-dashboard__holder-value dashboard-status__time">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-location-dot spark-dashboard__holder-icon"></i>
+                      Distance
+                    </span>
+                    <div id="lightning-distance" class="spark-dashboard__holder-container">
+                      <div data-value="10" class="spark-dashboard__holder-value dashboard-status__distance">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-lightbulb spark-dashboard__holder-icon"></i>
+                      Energy
+                    </span>
+                    <div id="lightning-energy" class="spark-dashboard__holder-container">
+                      <div data-value="783465387" class="spark-dashboard__holder-value dashboard-status__energy">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </section>
-    
-            <section class="spark-locator">
-              <span class="spark-locator__title">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                Search
-              </span>
-              <ul class="spark-locator__list">
-                <li class="spark-locator__info spark-state__info_locator">
-                  <span class="spark-locator__info-name">                
-                    <i class="fa-solid fa-tower-broadcast"></i>
-                    Locator
-                  </span>
-                  <span class="spark-locator__message spark-state__message_null" id="state">null</span>
-                </li>
-              </ul>
+
+            <section class="spark-dashboard__block dashboard-locator">
+              <div class="spark-dashboard__header">
+                <span class="spark-dashboard__legend">
+                  <i class="fa-solid fa-magnifying-glass spark-dashboard__legend-icon"></i>
+                  Search
+                </span>
+              </div>
+              <div class="spark-dashboard__content">
+                <ul class="spark-dashboard__list">
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-tower-broadcast spark-dashboard__holder-icon"></i>
+                      Locator
+                    </span>
+                    <div id="lightning-locator" class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-value dashboard-locator__search dashboard-locator__search_disturber">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </section>
-    
-            <section class="spark-options">
-              <div class="spark-options__header">
-                <span class="spark-options__title">
-                  <i class="fa-solid fa-sliders"></i>
+
+            <section class="spark-dashboard__block dashboard-settings">
+              <div class="spark-dashboard__header">
+                <span class="spark-dashboard__legend">
+                  <i class="fa-solid fa-sliders spark-dashboard__legend-icon"></i>
                   Settings
                 </span>
-                <div class="spark-options__editor">
-                  <div class="spark-options__menu">
-                    <button class="spark-options__refresh" id="config-refresh">
-                      <span>
-                        <i class="fa-solid fa-arrow-rotate-right"></i>
-                        Refresh
-                      </span>
+                <div class="spark-dashboard__control">
+                  <div class="dashboard-settings__menu">
+                    <button class="dashboard-settings__control-button" id="config-refresh">
+                      <i class="fa-solid fa-arrow-rotate-right dashboard-settings__control-icon"></i>
+                      Refresh
                     </button>
-                    <button class="spark-options__edit" id="config-edit">
-                      <span>
-                        <i class="fa-solid fa-scissors"></i>
-                        Edit
-                      </span>
+                    <button class="dashboard-settings__control-button" id="config-edit">
+                      <i class="fa-solid fa-scissors dashboard-settings__control-icon"></i>
+                      Edit
                     </button>
                   </div>
-                  <div class="spark-options__menu">
-                    <button class="spark-options__refresh" id="config-refresh">
-                      <span>
-                        <i class="fa-solid fa-arrow-rotate-right"></i>
-                        Refresh
-                      </span>
-                      <button class="spark-options__apply" id="config-apply">
-                        <span>
-                          <i class="fa-solid fa-share"></i>
-                          Apply
-                        </span>
-                      </button>
-                      <button class="spark-options__exit" id="config-exit">
-                        <span>
-                          <i class="fa-solid fa-xmark"></i>
-                          Exit
-                        </span>
-                      </button>
+                  <div class="dashboard-settings__menu">
+                    <button class="dashboard-settings__control-button" id="config-refresh">
+                      <i class="fa-solid fa-arrow-rotate-right dashboard-settings__control-icon"></i>
+                      Refresh
+                    </button>
+                    <button class="dashboard-settings__control-button" id="config-apply">
+                      <i class="fa-solid fa-share dashboard-settings__control-icon"></i>
+                      Apply
+                    </button>
+                    <button class="dashboard-settings__control-button" id="config-exit">
+                      <i style="font-size: 110%;" class="fa-solid fa-xmark dashboard-settings__control-icon"></i>
+                      Exit
+                    </button>
                   </div>
                 </div>
               </div>
-              <ul class="spark-options__list">
-                <li id="config-indoor" class="spark-options__setting spark-options__setting_loading">
-                  <span>Location</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="indoor">Indoor</option>
-                    <option value="outdoor">Outdoor</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-                <li id="config-noise" class="spark-options__setting spark-options__setting_loading">
-                  <span>Noise Level</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="0">0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-                <li id="config-disturber" class="spark-options__setting spark-options__setting_loading">
-                  <span>Show Disturber</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="on">On</option>
-                    <option value="off">Off</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-                <li id="config-threshold" class="spark-options__setting spark-options__setting_loading">
-                  <span>Watchdog Threshold</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-                <li id="config-spike" class="spark-options__setting spark-options__setting_loading">
-                  <span>Spike</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-                <li id="config-lightnings" class="spark-options__setting spark-options__setting_loading">
-                  <span>Lightnings Count</span>
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <select disabled="disabled">
-                    <option value="1">1</option>
-                    <option value="5">5</option>
-                    <option value="9">9</option>
-                    <option value="16">16</option>
-                  </select>
-                  <div class="spark-options__loader">
-                    <div class="spark-options__loader-animation"></div>
-                  </div>
-                </li>
-              </ul>          
+              <div class="spark-dashboard__content">
+                <ul class="spark-dashboard__list">
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Location</span>
+                    <div class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="indoor">Indoor</option>
+                        <option value="outdoor">Outdoor</option>
+                      </select>
+                    </div>
+                  </li>                  
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Noise Level</span>
+                    <div class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                      </select>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Show Disturber</span>
+                    <div class="spark-dashboard__holder-container">                      
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="on">On</option>
+                        <option value="off">Off</option>
+                      </select>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Watchdog Threshold</span>
+                    <div class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                      </select>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Spike Rejection</span>
+                    <div id="config-noise" class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                      </select>
+                    </div>
+                  </li>
+                  <li class="spark-dashboard__holder dashboard-settings__option">
+                    <span class="spark-dashboard__holder-name">Lightnings Accounting (15 min)</span>
+                    <div class="spark-dashboard__holder-container">
+                      <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      <select class="spark-dashboard__select" disabled="disabled">
+                        <option value="1">1</option>
+                        <option value="5">5</option>
+                        <option value="9">9</option>
+                        <option value="16">16</option>
+                      </select>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </section>
-    
-            <section class="weather">
-              <span class="weather__title">
-                <i class="fa-solid fa-cloud"></i>
-                Weather
-              </span>
-              <ul class="weather-list">
-                <li class="weather-list__parameter weather-list__parameter_temperature">
-                  <i class="fa-solid fa-temperature-low"></i>
-                  <span class="weather__option-name">Temperature</span>
-                  <span class="weather__option-value">
-                    <span>null</span>
-                  </span>
-                </li>
-                <li class="weather-list__parameter weather-list__parameter_temperature_humidity">
-                  <i class="fa-solid fa-droplet"></i>
-                  <span class="weather__option-name">Humidity </span>
-                  <span class="weather__option-value">
-                    <span>null</span>
-                    <small class="weather_modifier">&#37;</small>
-                  </span>
-                </li>
-                <li class="weather-list__parameter weather-list__parameter_temperature_pressure">
-                  <i class="fa-solid fa-chart-area"></i>
-                  <span class="weather__option-name">Pressure </span>
-                  <span class="weather__option-value">
-                    <span>null</span>
-                    <small class="weather_modifier">mmHg</small>
-                  </span>
-                </li>
-              </ul>
+
+            <section class="spark-dashboard__block dashboard-weather">
+              <div class="spark-dashboard__header">
+                <span class="spark-dashboard__legend">
+                  <i class="fa-solid fa-cloud spark-dashboard__legend-icon"></i>
+                  Weather
+                </span>
+              </div>
+              <div class="spark-dashboard__content">
+                <ul class="spark-dashboard__list">
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-temperature-low spark-dashboard__holder-icon"></i>
+                      Temperature
+                    </span>
+                    <div id="weather-temperature" class="spark-dashboard__holder-container">
+                      <div data-value="28.1" class="spark-dashboard__holder-value dashboard-weather__temperature">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-droplet spark-dashboard__holder-icon"></i>
+                      Humidity
+                    </span>
+                    <div id="weather-humidity" class="spark-dashboard__holder-container">
+                      <div data-value="99" class="spark-dashboard__holder-value dashboard-weather__humidity">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+
+                  <li class="spark-dashboard__holder">
+                    <span class="spark-dashboard__holder-name">
+                      <i class="fa-solid fa-gauge-high"></i>
+                      Pressure
+                    </span>
+                    <div id="weather-pressure" class="spark-dashboard__holder-container">
+                      <div data-value="743" class="spark-dashboard__holder-value dashboard-weather__pressure">
+                        <div class="spark-dashboard__holder-loader"><div></div><div></div><div></div></div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </section>
           </section>
         </div>
-      </div>      
+      </div>
     </main>
 
-    <footer class="mobile-menu">
-      <i class="fa-solid fa-microchip mobile-menu__logo"></i>
-      <div class="mobile-menu__socket">
-        <i class="fa-solid fa-plug"></i>
-        <span></span>
-      </div>
-      <a href="#" class="mobile-menu__logout">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Logout
-      </a>
-    </div>
-    </footer>
-
+    <footer class="page__mobile-menu"></footer>
     <script src="static/script.js"></script>
   </body>
 </html>
