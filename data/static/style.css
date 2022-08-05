@@ -42,7 +42,7 @@ body {
   --theme-orange-100: #5e4633;
   --theme-orange-200: #94531e;
   --theme-orange-300: #f48225;
-  --theme-orange-700: #ffc107; */
+  --theme-orange-700: #ffc107; */  
 }
 
 
@@ -186,7 +186,7 @@ body {
   display: grid;
   grid-template-columns: [col1-start] auto [col2-start] 430px [col2-end];
   grid-template-rows: [row1-start] 130px [row2-start] auto [row3-start] auto [row4-start] auto [row5-start] auto [row5-end];
-  gap: 25px;
+  gap: 40px;
   width: 100%;  
 }
 
@@ -335,6 +335,7 @@ body {
 .spark-locator__info,
 .spark-options__setting {
   padding: 9px 15px;
+  min-height: 52px;
 }
 
 .weather__option-name {
@@ -347,6 +348,7 @@ body {
   padding: 3px 10px;
   color: white;
   border-radius: 4px;
+  font-size: 13.5pt;
 }
 
 .weather_modifier {
@@ -365,6 +367,7 @@ body {
   border-radius: 50%;
   border: 2px solid var(--modifier-color);
 }
+
 
 .weather-list i,
 .park-locator__list i {
@@ -518,10 +521,6 @@ body {
   align-items: center;
 }
 
-.spark-options__setting {
-  min-height: 52px;
-}
-
 .spark-options__setting:first-of-type,
 .weather-list__parameter:first-of-type,
 .spark-state__info:first-of-type,
@@ -647,6 +646,21 @@ body {
     grid-gap: 28px;    
   }
 
+  .spark-options__title,
+  .weather__title,
+  .spark-state__title,
+  .spark-locator__title {
+    font-size: 19pt;
+  }
+
+  .spark-options__title i,
+  .weather__title i,
+  .spark-state__title i,
+  .spark-locator__title i {
+    margin-right: 7px;
+  }
+
+
   .spark-state,
   .spark-locator {
     max-width: none;
@@ -675,7 +689,7 @@ body {
   .spark-locator {
     grid-column: col1-start / col1-end;
     grid-row: row3-start / row4-start;
-  };
+  };  
 }
 
 @media screen and

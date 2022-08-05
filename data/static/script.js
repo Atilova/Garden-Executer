@@ -46,7 +46,7 @@ const managementWorkflow = () => {
   const fetchConfig = () => {
     configArray.forEach(setting => setLoader(FetchingState.LOADING, setting[0]));
     setTimeout(() => {
-      fetch("http://192.168.1.116/api/options")
+      fetch("http://192.168.1.106/api/options")
         .then(response => response.json())
         .then(data => {
           configArray.forEach(setting => {
@@ -119,7 +119,7 @@ const managementWorkflow = () => {
             currentValue = getSelectElement($htmlElement).value;
       jsonToServer[name] = !!params ? !!params.indexOf(currentValue) : +currentValue;
     });
-    fetch("http://192.168.1.116/api/options", {"method": "POST", "body": JSON.stringify(jsonToServer)});
+    fetch("http://192.168.1.106/api/options", {"method": "POST", "body": JSON.stringify(jsonToServer)});
     fetchConfig();
   });
 
@@ -264,7 +264,7 @@ const managementWorkflow = () => {
   };
 
   const startNewWs = () => {
-    ws = new WebSocket("ws://192.168.1.116/ws/");
+    ws = new WebSocket("ws://192.168.1.106/ws/");
     ws.onopen = onOpen;
     ws.onclose = onClose;
     ws.onmessage = onInbox;
@@ -275,21 +275,36 @@ const managementWorkflow = () => {
     const $display =  document.querySelector(".page__header-socket");
     setTimeout(() => {
       if(isConnecting)
-        return $display.classList.remove("page__header-socket_online");
-      $display.classList.add("page__header-socket_online");
+        return $display.classList.remove("page-header__socket_online");
+      $display.classList.add("page-header__socket_online");
     }, 200);
   };
 
 
-  let $play = document.createElement(`button`);
-  $play.innerText = "PLay";
-  $play.addEventListener("click", animateLightning);
-  document.querySelector("header").insertAdjacentElement(
-    "beforeend",
-    $play
-  );
+  // let $play = document.createElement(`button`);
+  // $play.innerText = "PLay";
+  // $play.addEventListener("click", animateLightning);
+  // document.querySelector("body").insertAdjacentElement(
+  //   "beforeend",
+  //   $play
+  // );
 
   startNewWs();
 };
 
-managementWorkflow();
+// managementWorkflow();
+
+
+
+
+test.addEventListener("click", () => {
+  // const $value = document.getElementById("lightning-distance");
+  // const $value = document.getElementById("lightning-locator");
+  // $value.setAttribute("disabled", false);
+
+  const $value = document.querySelector("#config-noise");
+  // $value.disabled = !$value.disabled;
+  $value.classList.toggle("spark-dashboard__holder-container_loaded");
+  
+  
+});

@@ -6,7 +6,7 @@
   gap: 30px;
   width: 100%;  
   grid-template-columns: auto 440px;
-  grid-template-rows: 130px repeat(5, auto);
+  grid-template-rows: 160px repeat(5, auto);
 
   grid-template-areas: "statistics statistics"
                        "status settings"
