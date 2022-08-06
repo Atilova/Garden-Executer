@@ -1,0 +1,24 @@
+{
+  "name": "ESPRandom",
+  "keywords": "rng, random, uuid, generator, esp",
+  "description": "Generate random numbers and UUIDs on the ESP8266 and ESP32 using the hardware RNG",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/protohaus/ESPRandom.git"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Moritz Ulmer",
+      "email": "moritz.ulmer@posteo.de",
+      "url": "https://www.protohaus.org",
+      "maintainer": true
+    }
+  ],
+  "version": "1.4.1",
+  "frameworks": "arduino",
+  "platforms": [
+    "espressif8266",
+    "espressif32"
+  ]
+}
