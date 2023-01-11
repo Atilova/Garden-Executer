@@ -9,14 +9,10 @@
   #include <Functions.h>
   #include <CircularBuffer.h>
   #include <functional>
-  #include <ArduinoJson.h>
-  #include <ESPRandom.h>
 
 
   namespace Mqtt
     {
-      typedef std::function<void(char* topic, JsonDocument& doc)> receiveCallback_t;
-
       struct Config {
         IPAddress WIFI_IP;
         IPAddress WIFI_GATEWAY;
@@ -38,44 +34,129 @@
         const char* MQTT_PASSWORD;
       };
 
-       struct PublishBufferData
+      struct InboxBufferData
+        {
+          const char* topic;
+          const byte* payload;
+          uint8_t length;
+        };
+
+      struct PublishBufferData
         {
           const char* topic;
           const char* payload;
           boolean retain;
         };
 
-      struct InboxBufferData
+      struct RequestParameters
         {
-          char* topic;
-          byte* payload;
-          uint8_t length;
+          public:
+            constexpr static const byte UNUSED_BYTE = 0xff;
+            
+            // Request protocol allowed byte commands & arguments
+            constexpr static const byte SENSOR_DEVICE = 0x0,  // deviceType
+                                        RELAY_DEVICE = 0x1,
+                                        ALL_DEVICES = 0x2;
+            
+            constexpr static const byte STATUS_OPERATION = 0x0,  // operationCode
+                                        RUN_OPERATION = 0x1,
+                                        SYNCHRONIZATION_OPERATION = 0x2,
+                                        PING_OPERATION = 0x3;
+
+            constexpr static const byte STATE_ON_ENABLE = 0x1,  // runParameter
+                                        STATE_OFF_DISABLE = 0x0;
+          protected:
+            const unsigned char* _initialBytes;
+
+          public:
+            byte confirmationId[2];
+            byte operationCode = UNUSED_BYTE,
+                  deviceType = UNUSED_BYTE,  // 0x0: sensor; 0x1: relay
+                  deviceId = UNUSED_BYTE,  // sensor or relay id number
+                  runParameter = UNUSED_BYTE;
+            boolean isError = true;
+
+            RequestParameters(InboxBufferData& data)
+              {
+                if(data.length < 3)
+                  return;
+
+                _initialBytes = static_cast<const unsigned char*>(data.payload);
+
+                assignBytesByIndex(0, confirmationId);
+                assignByteByIndex(2, operationCode);
+                // if(operationCode == UNUSED_BYTE || operationCode )
+
+                if(!any_variants<byte>(
+                  operationCode, 
+                  STATUS_OPERATION, 
+                  RUN_OPERATION, 
+                  SYNCHRONIZATION_OPERATION,
+                  PING_OPERATION)
+                ) 
+                  {
+                    Serial.println("Incorrect operation");
+                  };
+
+
+
+
+
+
+                Serial.printf(
+                  "Topic: %s, ConfirmationId: %x %x %x %x, OperationCode: %x\n",
+                  data.topic,
+                  confirmationId[0], confirmationId[1], confirmationId[2], confirmationId[3],
+                  operationCode
+                  );
+
+                  isError = false;
+              };
+
+              ~RequestParameters() {};
+
+            private:
+              template<typename T, typename ...Vars> bool any_variants(T checkValue, Vars ...variants)
+                {
+                  return (... || (checkValue == variants));
+                };
+
+              void assignBytesByIndex(uint16_t byteStartIndex, byte* assignmentVariable, uint16_t nBytes=0)
+                {
+                  // function will use by default the full size - sizeof(assignmentVariable)
+                  uint16_t getNBytes = nBytes ? nBytes : len(assignmentVariable);
+                  memcpy(assignmentVariable, &_initialBytes[byteStartIndex], getNBytes);
+                };
+
+              void assignByteByIndex(uint16_t byteStartIndex, byte& assignmentVariable)
+                {
+                  byte result[1];
+                  memcpy(result, &_initialBytes[byteStartIndex], 1);
+                  assignmentVariable = result[0];
+                };
         };
 
       class MqttConsumer : private PubSubClient
         {
           protected:
-            constexpr static const char* HANDSHAKE_MESSAGE_TEMPLATE = "{\"type\": \"HANDSHAKE\", \"id\": \"%s\"}";
-            constexpr static const char* PONG_MESSAGE_TEMPLATE = "{\"type\": \"PONG\"%s}";
-
             constexpr static const uint8_t WIFI_CONNECTION_TIMEOUT = 3,  // In Seconds
                                            WIFI_RETRY_ENTRIES = 5,  // Entries count, before WiFi will be reset
                                            NEXT_PING_DELAY = 2,  // In Seconds
                                            HANDSHAKE_TIMEOUT = 4;  // In Seconds
+
+            using stateHandle_t = void(MqttConsumer::*)(void);
+            typedef std::function<void(InboxBufferData)> receiveCallback_t;
 
           private:
             Config* _conf;
             WiFiClient wifiClient;
             CircularBuffer<PublishBufferData, 100> publishBuffer;
             CircularBuffer<InboxBufferData, 20> inboxBuffer;
-            StaticJsonDocument<1000> jsonBuffer;
             TaskHandle_t xEngineHandle = NULL;
             TaskHandle_t xPublisherHandle = NULL;
             TaskHandle_t xInboxHandle = NULL;
             receiveCallback_t userReceiveCallback;
-            String lastId;
-            void (MqttConsumer::* handleNext)(void) = &MqttConsumer::connectToWifi;
-            volatile boolean isHandshaked = false;
+            stateHandle_t handleNext = &MqttConsumer::connectToWifi;
 
             static void engineLoop(void* consumer)
               {
@@ -136,31 +217,15 @@
                     for(uint8_t index = 0; index < _conf->LISTENERS_SIZE; index++)
                       subscribe(_conf->LISTENERS[index]);
 
-                    callPublisher();
+                    callPublisher();  // TODO; maybe need to be removed (send messages previously not sent )
                     const uint16_t loopDelay = calculateTicsTime(100);
 
-                    uint32_t lastTimeHandshaked = 0;
                     while(loop())
-                      {
-                        if(!isHandshaked && (millis() - lastTimeHandshaked) > HANDSHAKE_TIMEOUT*1000L)
-                          {
-                            lastTimeHandshaked = millis();
-
-                            uint8_t uuid[16];
-                            ESPRandom::uuid4(uuid);
-                            lastId = ESPRandom::uuidToString(uuid);
-
-                            char buffer[200];
-                            sprintf(buffer, HANDSHAKE_MESSAGE_TEMPLATE, lastId.c_str());
-                            publish(_conf->SERVER_TOPIC_PUBLISH, buffer);  // Use simple publish instead smartPublish to prevent garbage data after connection fail
-                          };
-                        vTaskDelay(loopDelay);
-                      };
+                      vTaskDelay(loopDelay);
                   }
                   else
                     vTaskDelay(calculateTicsTime(1000));
 
-                  isHandshaked = false;
                   handleNext = &MqttConsumer::pingServer;
               };
 
@@ -183,58 +248,25 @@
                     _instance->xPublisherHandle = NULL;
                     vTaskDelete(NULL);
                   },
-                  "PUBLISHER-LOOP", 7000, (void*)this, 3, &xPublisherHandle
+                  "PUBLISHER-LOOP", 7000, static_cast<void*>(this), 3, &xPublisherHandle
                 );
               };
 
-            boolean checkSystemMessage(const char* topic, JsonDocument& doc)
+            boolean checkSystemMessage(InboxBufferData& data)
               {
-                if(!doc.containsKey("type") || !doc["type"].is<const char*>())
-                  return true;  // Skip, if data incorrect
-
-                if(strcmp(_conf->SERVER_TOPIC_LISTEN, topic))
+                if(strcmp(_conf->SERVER_TOPIC_LISTEN, data.topic))
                   return false;  // Not main server topic
 
-                const char* type = doc["type"];
-                if(!strcmp(type, "HANDSHAKE"))
+                RequestParameters parameters(data);
+
+                if(parameters.isError)
                   {
-                    if(!doc.containsKey("id") || !doc["id"].is<const char*>())
-                      return true;
-
-                    const char* confirmationId = doc["id"];
-                    if(strcmp(lastId.c_str(), confirmationId))
-                      return true;
-
-                    isHandshaked = true;  // Handshake done
+                    Serial.println("Error parsing parameters");
                     return true;
                   }
-                else if(!strcmp(type, "PING"))  // Requested PING -> send PONG
-                  {
-                    char buffer[200];
 
-                    if(doc.containsKey("id") && doc["id"].is<const char*>())
-                      {
-                        char subBuffer[100];
-                        const char idTemplate[] = "{\"id\": \"%s\"}";
-                        const char* id = doc["id"];
-                        sprintf(subBuffer, idTemplate, id);
-                        sprintf(buffer, PONG_MESSAGE_TEMPLATE, subBuffer);
-                      }
-                      else
-                        sprintf(buffer, PONG_MESSAGE_TEMPLATE, "");
-
-                    publish(_conf->SERVER_TOPIC_PUBLISH, buffer);  // Use simple publish instead smartPublish to prevent garbage data after connection fail
-                    return true;
-                  };
-
-                return false;
-              };
-
-            String uuid(void)
-              {
-                uint8_t uuid[16];
-                ESPRandom::uuid(uuid);
-                return ESPRandom::uuidToString(uuid);
+                //Serial.println(parameters.confirmationId, HEX);
+                return true;
               };
 
             void callReceiver(void)
@@ -249,17 +281,16 @@
                     while(!_instance->inboxBuffer.isEmpty())
                       {
                         InboxBufferData data = _instance->inboxBuffer.pop();
-                        deserializeJson(_instance->jsonBuffer, (const byte*)data.payload, data.length);
-                        if(_instance->checkSystemMessage(data.topic, _instance->jsonBuffer))
+                        if(_instance->checkSystemMessage(data))
                           continue;
 
-                        _instance->userReceiveCallback(data.topic, _instance->jsonBuffer);
+                        _instance->userReceiveCallback(data);
                       };
 
                     _instance->xInboxHandle = NULL;
                     vTaskDelete(NULL);
                   },
-                  "INBOX-LOOP", 5000, (void*)this, 2, &xInboxHandle
+                  "INBOX-LOOP", 5000, static_cast<void*>(this), 2, &xInboxHandle
                 );
               };
 
@@ -305,7 +336,7 @@
 
             void run(void)
               {
-                xTaskCreate(MqttConsumer::engineLoop, "MQTT-ENGINE", 3000, (void*)this, 1, &xEngineHandle);
+                xTaskCreate(MqttConsumer::engineLoop, "MQTT-ENGINE", 3000, static_cast<void*>(this), 1, &xEngineHandle);
               };
         };
 
